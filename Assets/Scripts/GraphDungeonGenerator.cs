@@ -6,7 +6,6 @@ using Random = UnityEngine.Random;
 
 public class GraphDungeonGenerator : MonoBehaviour
 {
-    [SerializeField] private int dungeonSize = 80;
     [SerializeField] private int roomSize = 10;
     [SerializeField] private int randomSeed = 10;
     [SerializeField] private int roomCount = 13;
@@ -21,37 +20,39 @@ public class GraphDungeonGenerator : MonoBehaviour
     private List<int> passedRooms = new List<int>();
 
 
-    // private int[,] graph = new int[,]
-    // {
-    //     { 0, 1, 0, 0, 1 },
-    //     { 1, 0, 0, 1, 0 },
-    //     { 0, 0, 0, 1, 0 },
-    //     { 0, 1, 1, 0, 1 },
-    //     { 1, 0, 0, 1, 0 }
-    // };
     private int[,] graph = new int[,]
     {
-        { 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 },
-        { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-        { 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0 },
-        { 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 },
-        { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 },
-        { 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 },
-        { 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0 },
-        { 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0 },
-        { 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1 },
-        { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
-        { 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0 },
-        { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0 },
-        { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 }
+        { 0, 1, 0, 0, 1 },
+        { 1, 0, 0, 1, 0 },
+        { 0, 0, 0, 1, 0 },
+        { 0, 1, 1, 0, 1 },
+        { 1, 0, 0, 1, 0 }
     };
+    // private int[,] graph = new int[,]
+    // {
+    //     { 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 },
+    //     { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+    //     { 0, 1, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0 },
+    //     { 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 },
+    //     { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 },
+    //     { 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 },
+    //     { 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0 },
+    //     { 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0 },
+    //     { 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1 },
+    //     { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
+    //     { 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0 },
+    //     { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0 },
+    //     { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 }
+    // };
 
     void Start()
     {
         Random.InitState(randomSeed);
         dungeonPlacer = GetComponent<DungeonPlacer>();
-        //GenerateRooms();
         PrintMatrix(graph);
+        Debug.Log("______");
+        PrintMatrix(GenerateDungeon());
+        graph = GenerateDungeon();
         ShortestCycleOrPath();
         GenerateRooms();
     }
@@ -320,6 +321,7 @@ public class GraphDungeonGenerator : MonoBehaviour
             int roomIndex = chain.completeCycle[roomOrder];
             rooms[roomIndex].CopyPosition(newRoom);
             rooms[roomIndex].placed = true;
+            
             if (rooms[roomIndex].CanBePlaced(rooms) && CheckOnCycleSuccess(chain, roomOrder))
             {
                 Debug.Log("__Found");
@@ -352,8 +354,10 @@ public class GraphDungeonGenerator : MonoBehaviour
             return true;
         }
 
-        GraphRoom room1 = rooms[chain.completeCycle[0]];
-        GraphRoom room2 = rooms[chain.completeCycle[^1]];
+        GraphRoom room1;
+       
+        room1 = rooms[chain.completeCycle[^1]];
+        GraphRoom room2 = rooms[chain.exit];
 
         Vector2 room1Position = room1.GetPosition();
         Vector2 room2Position = room2.GetPosition();
@@ -389,7 +393,17 @@ public class GraphDungeonGenerator : MonoBehaviour
         rooms[decomposedChains[0].completeCycle[0]] = firstRoom;
         firstRoom.placed = true;
         iterations = 0;
+
         GenerateByChain(firstRoom, decomposedChains[0], 1);
+        for (int i = 1; i < decomposedChains.Count; i++)
+        {
+            bool success= GenerateByChain(rooms[decomposedChains[i].enter], decomposedChains[i], 0);
+            if (!success)
+            {
+                Debug.Log("ALARM!!!!!!!!!!!!1");
+
+            }
+        }
         //bool success = MakeConnection(firstRoom, 0);
 
         for (int i = 0; i < roomCount; i++)
@@ -406,8 +420,38 @@ public class GraphDungeonGenerator : MonoBehaviour
                 }
             }
         }
+        //StartCoroutine(Placing());
     }
 
+    private IEnumerator Placing()
+    {
+        for (int i = 0; i < decomposedChains.Count; i++)
+        {
+            for (int j = 0; j < decomposedChains[i].completeCycle.Count; j++)
+            {
+                dungeonPlacer.PlaceRoom(rooms[decomposedChains[i].completeCycle[j]], Vector3.zero, decomposedChains[i].completeCycle[j]);
+                yield return new WaitForSeconds(0.5f);
+                if (j < decomposedChains[i].completeCycle.Count - 1)
+                {
+                    dungeonPlacer.PlaceCorridor(1, rooms[decomposedChains[i].completeCycle[j]].GetPosition(), rooms[decomposedChains[i].completeCycle[j+1]].GetPosition(), Vector3.zero);
+                }
+                else if(decomposedChains[i].cycle)
+                {
+                    dungeonPlacer.PlaceCorridor(1, rooms[decomposedChains[i].completeCycle[j]].GetPosition(), rooms[decomposedChains[i].exit].GetPosition(), Vector3.zero);
+                }
+                yield return new WaitForSeconds(0.5f);
+
+            }
+
+            if (i < decomposedChains.Count - 1)
+            {
+                dungeonPlacer.PlaceCorridor(1, rooms[decomposedChains[i+1].enter].GetPosition(), rooms[decomposedChains[i+1].completeCycle[0]].GetPosition(), Vector3.zero);
+            }
+            yield return new WaitForSeconds(1.5f);
+
+        }
+    }
+    
     // void OnDrawGizmos()
     // {
     //     Gizmos.color = Color.red;
@@ -439,24 +483,29 @@ public class GraphDungeonGenerator : MonoBehaviour
 
     public int[,] GenerateDungeon()
     {
-        // Встановлюємо початкову вершину
         int[,] adjacencyMatrix = new int[roomCount, roomCount];
-        int startVertex = 0;
 
-        // Заповнюємо матрицю суміжностей
+        // для каждой вершины генерируем случайное количество соседей
         for (int i = 0; i < roomCount; i++)
         {
-            for (int j = i + 1; j < roomCount; j++)
-            {
-                // Генеруємо випадкову вагу ребра
-                int weight = Random.Range(0, 2);
+            int numNeighbors = Random.Range(0, 4); // случайное число соседей от 0 до 4
 
-                // Додаємо ребро до графу, якщо вага не 0 і ще немає ребра між вершинами
-                if (weight != 0 && adjacencyMatrix[i, j] == 0 && adjacencyMatrix[j, i] == 0)
+            // выбираем случайные вершины из графа в качестве соседей
+            List<int> neighbors = new List<int>();
+            while (neighbors.Count < numNeighbors)
+            {
+                int neighbor = Random.Range(0, roomCount);
+                if (neighbor != i && !neighbors.Contains(neighbor))
                 {
-                    adjacencyMatrix[i, j] = weight;
-                    adjacencyMatrix[j, i] = weight;
+                    neighbors.Add(neighbor);
                 }
+            }
+
+            // создаем ребра в матрице смежности для выбранных соседей
+            for (int j = 0; j < numNeighbors; j++)
+            {
+                adjacencyMatrix[i, neighbors[j]] = 1;
+                adjacencyMatrix[neighbors[j], i] = 1;
             }
         }
 
