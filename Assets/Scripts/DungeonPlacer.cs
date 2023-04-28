@@ -40,4 +40,14 @@ public class DungeonPlacer : MonoBehaviour
         room.gameObject.name = "room "+index;
         return room;
     }
+
+    public void RemoveEverything()
+    {
+        int childCount = transform.childCount;
+        for (int i = 0; i < childCount; i++)
+        {
+            DestroyImmediate(transform.GetChild(0).gameObject);
+        }
+
+    }
 }
