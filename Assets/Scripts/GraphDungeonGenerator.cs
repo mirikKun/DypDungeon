@@ -12,8 +12,18 @@ public class GraphDungeonGenerator : MonoBehaviour
     [SerializeField] private int roomSize = 10;
     [SerializeField] private int randomSeed = 10;
     [SerializeField] private int roomCount = 13;
+    [SerializeField] private float[] chances = { 0.45f, 0.84f, 1f, 1 };
+
     [SerializeField] private int corridorLenght = 10;
-    [SerializeField] private int minRoomDistance = 18;
+    [SerializeField] private float corridorWidth = 1;
+
+    private int minRoomDistance = 18;
+    [SerializeField] private bool cyclesAllowed = true;
+    [SerializeField] private bool randomAngles = true;
+
+    [SerializeField] private int corridorLenghtRange = 5;
+    [SerializeField] private int roomSizeRange = 5;
+    [SerializeField] private Transform camera;
     private DungeonPlacer dungeonPlacer;
     private GraphRoom[] rooms;
     private int iterations = 0;
@@ -21,37 +31,21 @@ public class GraphDungeonGenerator : MonoBehaviour
     private List<Chain> completedNoCycleChains = new List<Chain>();
     private List<Chain> decomposedChains = new List<Chain>();
     private List<int> passedRooms = new List<int>();
-    private List<Room> corridors=new List<Room>();
+    private GraphRoom[] corridors;
 
     private bool CheckOnIterations()
     {
         iterations++;
-        if (iterations > 150)
+        if (iterations > 350)
         {
-            Debug.Log("_________Out of iterations__________-");
+            Debug.Log("Out of iterations");
             return true;
         }
 
         return false;
     }
 
-    // private int[,] graph = new int[,]
-    // {
-    //     { 0, 1, 0, 0, 1 },
-    //     { 1, 0, 0, 1, 0 },
-    //     { 0, 0, 0, 1, 0 },
-    //     { 0, 1, 1, 0, 1 },
-    //     { 1, 0, 0, 1, 0 }
-    // };    
-    // private int[,] graph = new int[,]
-    // {
-    //     { 0, 1, 0, 1, 0 },
-    //     { 1, 0, 0, 1, 1 },
-    //     { 0, 0, 0, 0, 1 },
-    //     { 1, 1, 0, 0, 1 },
-    //     { 0, 1, 1, 1, 0 }
-    // };
-    private int[,] graph = new int[,]
+    int[,] graph3 = new int[,]
     {
         { 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 },
         { 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
@@ -68,23 +62,69 @@ public class GraphDungeonGenerator : MonoBehaviour
         { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 }
     };
 
+    private int[,] graph = new int[,]
+    {
+        { 0, 0, 1, 1, 0, 0, 0, 0 },
+        { 0, 0, 1, 0, 0, 0, 0, 1 },
+        { 1, 1, 0, 0, 0, 0, 0, 0 },
+        { 1, 0, 0, 0, 0, 0, 0, 0 },
+        { 0, 0, 0, 0, 0, 1, 0, 1 },
+        { 0, 0, 0, 0, 1, 0, 1, 0 },
+        { 0, 0, 0, 0, 0, 1, 0, 0 },
+        { 0, 1, 0, 0, 1, 0, 0, 0 },
+    };
+
+
     void Start()
     {
-       // Generate();
+        minRoomDistance = (int)Mathf.Ceil((corridorLenght + corridorLenghtRange - 1) * Mathf.Sqrt(2));
     }
 
     public void Generate()
     {
+        iterations = 0;
+
         ResetVariables();
         dungeonPlacer.RemoveEverything();
         Random.InitState(randomSeed);
         PrintMatrix(graph);
         int[,] generatedMatrix = GeneratePlanarGraphAdjacencyMatrix(roomCount);
-        PrintMatrix(generatedMatrix);
-        graph = generatedMatrix;
+        PrintSyntaxMatrix(generatedMatrix);
+        //graph = generatedMatrix;
         ShortestCycleOrPath();
         GenerateRooms();
+
+        SetDungeonGeneration(FindObjectOfType<Dungeon3DGenerator>());
+        FindObjectOfType<Dungeon3DGenerator>().GenerateMesh();
     }
+
+    public void SetDungeonGeneration(Dungeon3DGenerator generator)
+    {
+        generator.ClearMeshes();
+        for (int i = 0; i < roomCount; i++)
+        {
+            if (rooms[i].placed)
+            {
+                generator.PlaceRoom(rooms[i], Vector3.zero, i);
+            }
+        }
+
+        for (int i = 0; i < roomCount; i++)
+        {
+            if (rooms[i].placed)
+            {
+                for (int j = i + 1; j < roomCount; j++)
+                {
+                    if (graph[i, j] == 1 && rooms[j].placed)
+                    {
+                        generator.PlaceCorridor(corridorWidth, rooms[i].GetPosition(), rooms[j].GetPosition(),
+                            Vector3.zero);
+                    }
+                }
+            }
+        }
+    }
+
 
     private void ResetVariables()
     {
@@ -92,9 +132,9 @@ public class GraphDungeonGenerator : MonoBehaviour
         completedNoCycleChains = new List<Chain>();
         decomposedChains = new List<Chain>();
         passedRooms = new List<int>();
-        corridors = new List<Room>();
-        dungeonPlacer = GetComponent<DungeonPlacer>(); 
+        dungeonPlacer = GetComponent<DungeonPlacer>();
     }
+
     public void ShortestChain()
     {
         int minLenght = Int32.MaxValue;
@@ -122,10 +162,6 @@ public class GraphDungeonGenerator : MonoBehaviour
 
         Chain cycleOrPath = completedPaths[minIndex];
         decomposedChains.Add(cycleOrPath);
-
-        Debug.Log("Shortest cycle or path: ");
-
-        //PrintMatrix(cycleOrPath.GetGraph());
         completedCycles = new List<Chain>();
         completedNoCycleChains = new List<Chain>();
     }
@@ -143,16 +179,11 @@ public class GraphDungeonGenerator : MonoBehaviour
                 return;
             }
 
-            // if (!visited[startIndex])
-            // {
+            if (DFS(startIndex, visited, parent, cycleOrPath))
             {
-                if (DFS(startIndex, visited, parent, cycleOrPath))
-                {
-                    // знайдено цикл, повертаємо його
-                    return;
-                }
+                // знайдено цикл, повертаємо його
+                return;
             }
-            //  }
 
             ShortestChain();
             startIndex = decomposedChains[^1].completeCycle[0];
@@ -161,21 +192,6 @@ public class GraphDungeonGenerator : MonoBehaviour
             parent = new int[roomCount];
             cycleOrPath = new List<int>();
         }
-
-        // якщо не знайдено цикл, повертаємо найкоротший ланцюг
-        return;
-    }
-
-    public bool[] GetVisited(Chain chain)
-    {
-        bool[] visited = new bool[roomCount];
-
-        for (int i = 0; i < chain.completeCycle.Count; i++)
-        {
-            visited[chain.completeCycle[i]] = true;
-        }
-
-        return visited;
     }
 
     // рекурсивна функція для пошуку циклу або ланцюга
@@ -189,9 +205,6 @@ public class GraphDungeonGenerator : MonoBehaviour
         {
             if (graph[u, v] != 0)
             {
-                bool second = CoreFound();
-
-
                 if (!visited[v] && IsBackToVisited(u, v))
                 {
                     parent[v] = u + 1;
@@ -210,7 +223,6 @@ public class GraphDungeonGenerator : MonoBehaviour
                         completedCycle.RemoveAt(0);
                     }
 
-                    //Debug.Log(string.Join(", ", completedCycle));
 
                     Chain newChain = new Chain(completedCycle, true);
                     newChain.enter = enterRoomIndex;
@@ -228,7 +240,6 @@ public class GraphDungeonGenerator : MonoBehaviour
                         completedChain.RemoveAt(0);
                     }
 
-                    //Debug.Log(string.Join(", ", completedChain));
 
                     Chain newChain = new Chain(completedChain, false);
                     newChain.enter = enterRoomIndex;
@@ -331,58 +342,109 @@ public class GraphDungeonGenerator : MonoBehaviour
     }
 
 
+    private int GetCorridorIndex(int roomOrder, int chainIndex)
+    {
+        int corridorIndex = 0;
+
+        for (int i = 0; i < chainIndex; i++)
+        {
+            corridorIndex += decomposedChains[i].completeCycle.Count - 1;
+            if (i == 0 && decomposedChains[i].cycle)
+            {
+                corridorIndex++;
+            }
+
+            if (i > 0)
+            {
+                corridorIndex++;
+                if (decomposedChains[i].cycle)
+                {
+                    corridorIndex++;
+                }
+            }
+        }
+
+        corridorIndex += roomOrder;
+        if (chainIndex > 0)
+        {
+            corridorIndex++;
+        }
+
+        return corridorIndex;
+    }
+
+    private int GetCorridorLenght()
+    {
+        return corridorLenght + Random.Range(0, corridorLenghtRange);
+    }
+
+    private int GetRoomSize()
+    {
+        return roomSize + Random.Range(0, roomSizeRange);
+    }
+
     private bool GenerateByChain(GraphRoom previousRoom, Chain chain, int roomOrder, int chainIndex)
     {
+        if (CheckOnIterations())
+        {
+            return false;
+        }
+
+        int corridorIndex = GetCorridorIndex(roomOrder, chainIndex);
+
+
         int roomIndex = chain.completeCycle[roomOrder];
-        Debug.Log("__Start " + roomOrder + " _ " + roomIndex);
 
         Vector2Int lastPosition = new Vector2Int(previousRoom.left, previousRoom.bottom);
+        bool lastInCycle = chain.cycle && roomOrder == chain.completeCycle.Count - 1;
 
         //int randDirectionX = Random.Range(0, 4);
-        int randDirectionX = Random.Range(0, 8);
+        int randDirectionX = Random.Range(0, 4);
 
         for (int i = 0; i < 8; i++)
         {
-            int rotations = (randDirectionX + i) % 8;
-
-
-            Vector2Int direction = Vector2Int.left;
-            if (rotations == 0)
+            int rotation;
+            if (i < 4)
             {
-                direction = Vector2Int.up;
+                rotation = (randDirectionX + i) % 4;
             }
-            else if (rotations == 1)
+            else
             {
-                direction = Vector2Int.right;
-            }
-            else if (rotations == 2)
-            {
-                direction = Vector2Int.down;
-            }
-            else if (rotations == 3)
-            {
-                direction = new Vector2Int(-1, 1);
-            }
-            else if (rotations == 5)
-            {
-                direction = new Vector2Int(1, 1);
-            }
-            else if (rotations == 6)
-            {
-                direction = new Vector2Int(1, -1);
-            }
-            else if (rotations == 7)
-            {
-                direction = new Vector2Int(-1, -1);
+                rotation = (randDirectionX + i) % 4 + 4;
             }
 
-            Vector2Int offset = direction * corridorLenght + lastPosition;
-            GraphRoom newRoom = new GraphRoom(0, roomSize, 0, roomSize, offset);
+            Vector2Int offset = new Vector2Int();
+            if (randomAngles)
+            {
+                Vector2 newDirection = GenerateDirection();
+                int newCorridorLenght = GetCorridorLenght();
+                offset = new Vector2Int((int)(newDirection.x * newCorridorLenght),
+                    (int)(newDirection.y * newCorridorLenght));
+            }
+            else
+            {
+                Vector2Int direction = GenerateDirection(rotation);
+                offset = direction * GetCorridorLenght();
+            }
+
+
+            GraphRoom newRoom = new GraphRoom(0, GetRoomSize(), 0, GetRoomSize(), offset + lastPosition);
             rooms[roomIndex].CopyPosition(newRoom);
             rooms[roomIndex].placed = true;
-            if (rooms[roomIndex].CanBePlaced(rooms) && CheckOnCycleSuccess(chain, roomOrder))
+            corridors[corridorIndex - 1] = newRoom.GetRoomInBetween(GetCorridorLenght() / 5, previousRoom);
+            corridors[corridorIndex - 1].placed = true;
+            corridors[corridorIndex - 1].index = corridorIndex - 1;
+            if (lastInCycle)
             {
-                Debug.Log("__Found " + roomOrder + " _ " + roomIndex);
+                corridors[corridorIndex] = newRoom.GetRoomInBetween(GetCorridorLenght() / 5, rooms[chain.exit]);
+                corridors[corridorIndex].placed = true;
+                corridors[corridorIndex].index = corridorIndex;
+            }
+
+            if (rooms[roomIndex].CanBePlaced(rooms) && CheckOnCycleSuccess(chain, roomOrder) &&
+                corridors[corridorIndex - 1].CanBePlaced(corridors) &&
+                (!lastInCycle || corridors[corridorIndex].CanBePlaced(corridors)))
+            {
                 if (roomOrder == chain.completeCycle.Count - 1)
                 {
                     if (chainIndex == decomposedChains.Count - 1 || GenerateByChain(
@@ -404,9 +466,61 @@ public class GraphDungeonGenerator : MonoBehaviour
             }
         }
 
-        Debug.Log("______NOOO " + roomOrder + " _ " + roomIndex);
         rooms[chain.completeCycle[roomOrder]].placed = false;
+        corridors[corridorIndex - 1] = null;
+        if (lastInCycle)
+        {
+            corridors[corridorIndex] = null;
+        }
+
         return false;
+    }
+
+    private Vector2Int GenerateDirection(int seed)
+    {
+        Vector2Int direction;
+        if (seed == 0)
+        {
+            direction = Vector2Int.left;
+        }
+        else if (seed == 1)
+        {
+            direction = Vector2Int.up;
+        }
+        else if (seed == 2)
+        {
+            direction = Vector2Int.right;
+        }
+        else if (seed == 3)
+        {
+            direction = Vector2Int.down;
+        }
+        else if (seed == 4)
+        {
+            direction = new Vector2Int(-1, 1);
+        }
+        else if (seed == 5)
+        {
+            direction = new Vector2Int(1, 1);
+        }
+        else if (seed == 6)
+        {
+            direction = new Vector2Int(1, -1);
+        }
+        else
+        {
+            direction = new Vector2Int(-1, -1);
+        }
+
+        return direction;
+    }
+
+    private Vector2 GenerateDirection()
+    {
+        Vector2 direction = new Vector2(Random.Range(-1f, 1f), Random.Range(-1f, 1f));
+
+        direction = direction.normalized;
+        return direction;
     }
 
     private bool CheckOnCycleSuccess(Chain chain, int roomIndex)
@@ -429,14 +543,14 @@ public class GraphDungeonGenerator : MonoBehaviour
         Vector2 room1Position = room1.GetPosition();
         Vector2 room2Position = room2.GetPosition();
         float distance = Vector2.Distance(room1Position, room2Position);
+
         bool closeEnough = distance < minRoomDistance;
         return closeEnough;
     }
 
     private void GenerateRooms()
     {
-        GraphRoom firstRoom = new GraphRoom(0, roomSize, 0, roomSize);
-        //dungeonPlacer.PlaceRoom(firstRoom, Vector3.zero);
+        GraphRoom firstRoom = new GraphRoom(0, GetRoomSize(), 0, GetRoomSize());
 
         rooms = new GraphRoom[roomCount];
         for (int i = 0; i < roomCount; i++)
@@ -444,6 +558,7 @@ public class GraphDungeonGenerator : MonoBehaviour
             rooms[i] = new GraphRoom(i);
         }
 
+        int edgeCount = 0;
         for (int i = 0; i < roomCount; i++)
         {
             for (int j = 0; j < roomCount; j++)
@@ -452,10 +567,15 @@ public class GraphDungeonGenerator : MonoBehaviour
                 {
                     rooms[i].connections.Add(rooms[j]);
                     rooms[i].placed = false;
+                    if (j > i)
+                    {
+                        edgeCount++;
+                    }
                 }
             }
         }
 
+        corridors = new GraphRoom[edgeCount];
 
         rooms[decomposedChains[0].completeCycle[0]] = firstRoom;
         firstRoom.placed = true;
@@ -464,19 +584,10 @@ public class GraphDungeonGenerator : MonoBehaviour
         bool success = GenerateByChain(firstRoom, decomposedChains[0], 1, 0);
         if (!success)
         {
-            Debug.Log("ALARM!!!!!!!!!!!!1");
+            Debug.Log("Can`t be placed");
         }
 
-        // for (int i = 1; i < decomposedChains.Count; i++)
-        // {
-        //     success = GenerateByChain(rooms[decomposedChains[i].enter], decomposedChains[i], 0);
-        //     if (!success)
-        //     {
-        //         Debug.Log("ALARM!!!!!!!!!!!!1");
-        //     }
-        // }
-        //bool success = MakeConnection(firstRoom, 0);
-
+        PlaceCamera();
         for (int i = 0; i < roomCount; i++)
         {
             if (rooms[i].placed)
@@ -486,12 +597,45 @@ public class GraphDungeonGenerator : MonoBehaviour
                 {
                     if (graph[i, j] == 1 && rooms[j].placed)
                     {
-                        dungeonPlacer.PlaceCorridor(1, rooms[i].GetPosition(), rooms[j].GetPosition(), Vector3.zero);
+                        dungeonPlacer.PlaceCorridor(corridorWidth, rooms[i].GetPosition(), rooms[j].GetPosition(),
+                            Vector3.zero);
                     }
                 }
             }
         }
         // StartCoroutine(Placing());
+    }
+
+    private void PlaceCamera()
+    {
+        int minLeft = Int32.MaxValue,
+            minBottom = Int32.MaxValue,
+            maxRight = Int32.MinValue,
+            maxTop = Int32.MinValue;
+        foreach (var room in rooms)
+        {
+            if (room.left < minLeft)
+            {
+                minLeft = room.left;
+            }
+
+            if (room.right > maxRight)
+            {
+                maxRight = room.right;
+            }
+
+            if (room.bottom < minBottom)
+            {
+                minBottom = room.bottom;
+            }
+
+            if (room.top > maxTop)
+            {
+                maxTop = room.top;
+            }
+        }
+
+        camera.position = new Vector3((minLeft + maxRight) / 2f, camera.position.y, (minBottom + maxTop) / 2f);
     }
 
     private IEnumerator Placing()
@@ -514,12 +658,14 @@ public class GraphDungeonGenerator : MonoBehaviour
                 yield return new WaitForSeconds(0.5f);
                 if (j < decomposedChains[i].completeCycle.Count - 1)
                 {
-                    dungeonPlacer.PlaceCorridor(1, rooms[decomposedChains[i].completeCycle[j]].GetPosition(),
+                    dungeonPlacer.PlaceCorridor(corridorWidth,
+                        rooms[decomposedChains[i].completeCycle[j]].GetPosition(),
                         rooms[decomposedChains[i].completeCycle[j + 1]].GetPosition(), Vector3.zero);
                 }
                 else if (decomposedChains[i].cycle)
                 {
-                    dungeonPlacer.PlaceCorridor(1, rooms[decomposedChains[i].completeCycle[j]].GetPosition(),
+                    dungeonPlacer.PlaceCorridor(corridorWidth,
+                        rooms[decomposedChains[i].completeCycle[j]].GetPosition(),
                         rooms[decomposedChains[i].exit].GetPosition(), Vector3.zero);
                 }
 
@@ -528,7 +674,7 @@ public class GraphDungeonGenerator : MonoBehaviour
 
             if (i < decomposedChains.Count - 1)
             {
-                dungeonPlacer.PlaceCorridor(1, rooms[decomposedChains[i + 1].enter].GetPosition(),
+                dungeonPlacer.PlaceCorridor(corridorWidth, rooms[decomposedChains[i + 1].enter].GetPosition(),
                     rooms[decomposedChains[i + 1].completeCycle[0]].GetPosition(), Vector3.zero);
             }
 
@@ -536,19 +682,6 @@ public class GraphDungeonGenerator : MonoBehaviour
         }
     }
 
-    // void OnDrawGizmos()
-    // {
-    //     Gizmos.color = Color.red;
-    //     foreach (var r in rooms)
-    //     {
-    //         if (r.placed)
-    //         {
-    //             Vector3 roomPosition = new Vector3(r.left + (float)r.GetWidth() / 2, 0, r.bottom + (float)r.GetHeight() / 2);
-    //             Gizmos.DrawWireSphere(this.transform.position+roomPosition,  minRoomDistance);
-    //
-    //         }
-    //     }
-    // }
     private void PrintMatrix(int[,] matrix)
     {
         string strMatrix = "";
@@ -565,10 +698,30 @@ public class GraphDungeonGenerator : MonoBehaviour
         Debug.Log(strMatrix);
     }
 
+    private void PrintSyntaxMatrix(int[,] matrix)
+    {
+        string output = "{\n";
+        for (int i = 0; i < matrix.GetLength(0); i++)
+        {
+            output += "    { ";
+            for (int j = 0; j < matrix.GetLength(1); j++)
+            {
+                output += matrix[i, j];
+                if (j < matrix.GetLength(1) - 1)
+                    output += ", ";
+            }
+
+            output += " },\n";
+        }
+
+        output += "};";
+
+        Debug.Log(output);
+    }
+
 
     private int GenerateRandomVertices()
     {
-        float[] chances = new[] { 0.35f, 0.74f, 0.93f, 1 };
         int[] vertices = new[] { 1, 2, 3, 4 };
         float rand = Random.Range(0, 1f);
         int finalValue = 0;
@@ -589,7 +742,6 @@ public class GraphDungeonGenerator : MonoBehaviour
             finalValue = vertices[3];
         }
 
-        Debug.Log(finalValue);
         return finalValue;
     }
 
@@ -600,7 +752,7 @@ public class GraphDungeonGenerator : MonoBehaviour
         int[] verticesInRows = new int[n];
 
 
-// Генеруємо ребра
+        // Генеруємо ребра
 
         int maxIterations = n * 2;
 
@@ -619,7 +771,7 @@ public class GraphDungeonGenerator : MonoBehaviour
 
             if (CheckOnIterations())
             {
-                Debug.Log("????");
+                Debug.Log("Out of iterations");
                 return null;
             }
 
@@ -649,9 +801,15 @@ public class GraphDungeonGenerator : MonoBehaviour
                     matrix[j, i] = 1;
                 }
             }
-        } while (!IsReachable(matrix, 0));
+        } while (!GraphChecks.IsReachable(matrix, 0));
 
-        Debug.Log(" reach =  " + IsReachable(matrix, 0));
+        Debug.Log(" reach =  " + GraphChecks.IsReachable(matrix, 0));
+        PrintMatrix(matrix);
+        if (!cyclesAllowed)
+        {
+            matrix = GraphChecks.RemoveCycles(matrix);
+        }
+
         return matrix;
     }
 
@@ -669,39 +827,6 @@ public class GraphDungeonGenerator : MonoBehaviour
         return count;
     }
 
-    bool IsReachable(int[,] matrix, int startVertex)
-    {
-        int n = matrix.GetLength(0);
-        bool[] visited = new bool[n];
-
-        // Запустимо алгоритм DFS
-        DFS(matrix, visited, startVertex);
-
-        // Перевіримо, чи були відвідані всі вершини
-        for (int i = 0; i < n; i++)
-        {
-            if (!visited[i])
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    void DFS(int[,] matrix, bool[] visited, int vertex)
-    {
-        visited[vertex] = true;
-        int n = matrix.GetLength(0);
-
-        for (int i = 0; i < n; i++)
-        {
-            if (matrix[vertex, i] == 1 && !visited[i])
-            {
-                DFS(matrix, visited, i);
-            }
-        }
-    }
 
     public void ClearAll()
     {
@@ -709,6 +834,7 @@ public class GraphDungeonGenerator : MonoBehaviour
         {
             dungeonPlacer = GetComponent<DungeonPlacer>();
         }
+
         dungeonPlacer.RemoveEverything();
     }
 }

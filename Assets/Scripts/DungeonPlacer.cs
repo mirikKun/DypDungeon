@@ -19,7 +19,7 @@ public class DungeonPlacer : MonoBehaviour
         DungeonSegment corridor =
             Instantiate(cube, transform.position + positionBetween - dungeonOffset, Quaternion.identity);
         corridor.SetParent(transform);
-        corridor.SetupScale(new Vector3(width,1,Vector3.Distance(firstRoom,secondRoom)));
+        corridor.SetupScale(new Vector3(width,1,Vector3.Distance(firstRoom,secondRoom)*0.8f));
         Vector2 direction = firstRoom - secondRoom;
         float angle = Mathf.Atan2(direction.x, direction.y) * Mathf.Rad2Deg;
         corridor.SetupRotation(angle);
