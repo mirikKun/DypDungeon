@@ -1,4 +1,3 @@
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class Room
@@ -34,6 +33,11 @@ public class Room
 
     public bool CanBePlacedWith(Room r)
     {
+      
+        if (right ==22)
+        {
+            Debug.Log(12);
+        }
         // перевіряємо, чи квадрати перетинаються по горизонталі (осі X)
         if (r.left <= right && r.right >= left)
         {

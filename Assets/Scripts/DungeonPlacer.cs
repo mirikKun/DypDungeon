@@ -1,5 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
+
 using UnityEngine;
 
 public class DungeonPlacer : MonoBehaviour
@@ -22,6 +21,23 @@ public class DungeonPlacer : MonoBehaviour
         corridor.SetupScale(new Vector3(width,1,Vector3.Distance(firstRoom,secondRoom)*0.8f));
         Vector2 direction = firstRoom - secondRoom;
         float angle = Mathf.Atan2(direction.x, direction.y) * Mathf.Rad2Deg;
+        corridor.SetupRotation(angle);
+        corridor.gameObject.name = "corridor";
+ 
+        return corridor;
+    }
+    public DungeonSegment PlaceCorridor(Vector3 corridorScale, float xPos, float yPos,bool horizontal,Vector3 dungeonOffset)
+    {
+        Vector3 positionBetween = new Vector3(xPos, 0, yPos);
+        DungeonSegment corridor =
+            Instantiate(cube, transform.position + positionBetween - dungeonOffset, Quaternion.identity);
+        corridor.SetParent(transform);
+        corridor.SetupScale(corridorScale);
+        float angle=0;
+        if (horizontal)
+        {
+            
+        }
         corridor.SetupRotation(angle);
         corridor.gameObject.name = "corridor";
 

@@ -2,12 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using Parabox.CSG;
 using UnityEngine;
+using UnityMeshSimplifier;
 
 public class MeshCombiner : MonoBehaviour
 {
- 
+
     public IEnumerator Combining3DMesh(MeshFilter[] meshFilters)
-   //public void Combining3DMesh(MeshFilter[] meshFilters)
    {
 
         Vector3 startMeshFilterPos = meshFilters[0].transform.parent.position;
@@ -26,12 +26,10 @@ public class MeshCombiner : MonoBehaviour
             mesh = CSG.Union(coreFilter.gameObject, meshFilters[i].gameObject).mesh;
             coreFilter.sharedMesh = mesh;
             meshFilters[0].transform.localScale=Vector3.one;
-
-            //meshFilters[0].transform.parent.position-=Vector3.up*3;
-            //GetComponent<MeshFilter>().sharedMesh = mesh;
-            // yield return new WaitForSeconds(1f);
-            //meshFilters[0].transform.parent.position+=Vector3.up*3;
-
+            // var meshSimplifier = new MeshSimplifier();
+            // meshSimplifier.Initialize(mesh);
+            // meshSimplifier.SimplifyMesh(0.5f);
+            // mesh = meshSimplifier.ToMesh();
         }
 
         meshFilters[0].transform.parent.position = startMeshFilterPos;

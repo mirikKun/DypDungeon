@@ -5,86 +5,100 @@ using UnityEngine;
 
 public class TextureSetter : MonoBehaviour
 {
-
-    public void SetTexturesByRooms(Room[] rooms)
+    public void SetTexturesByRooms(Room[] rooms,GraphRoom[] corridors)
     {
-        int minLeft=Int32.MaxValue, minBottom=Int32.MaxValue,
-            maxRight=Int32.MinValue, maxTop=Int32.MinValue;
+        int minLeft = Int32.MaxValue,
+            minBottom = Int32.MaxValue,
+            maxRight = Int32.MinValue,
+            maxTop = Int32.MinValue;
         foreach (var room in rooms)
         {
             if (room.left < minLeft)
             {
                 minLeft = room.left;
             }
+
             if (room.right > maxRight)
             {
                 maxRight = room.right;
             }
+
             if (room.bottom < minBottom)
             {
                 minBottom = room.bottom;
             }
+
             if (room.top > maxTop)
             {
                 maxTop = room.top;
             }
         }
-        Texture2D texture = new Texture2D(500, 500);
-        
-        for (int i = 0; i < rooms.Length; i++)
-        {
-                // dungeonPlacer.PlaceRoom(rooms[i], Vector3.zero, i);
-                // for (int j = i + 1; j < roomCount; j++)
-                // {
-                //     if (graph[i, j] == 1 && rooms[j].placed)
-                //     {
-                //         
-                //         dungeonPlacer.PlaceCorridor(1, rooms[i].GetPosition(), rooms[j].GetPosition(), Vector3.zero);
-                //     }
-                // }
-        }
-        for (int x = 0; x < texture.width; x++)
-        {
-            for (int y = 0; y < texture.width ; y++)
-            {
-                texture.SetPixel(x, y, Color.black);
-            }
-        }
-        
-    }
-    void Start()
-    {
-        Texture2D texture = new Texture2D(500, 500);
+
+        int size = 900;
+        Texture2D texture = new Texture2D(size, size);
 
 // Заповнюємо текстуру білим кольором
-        Color[] colors = new Color[500 * 500];
+        Color[] colors = new Color[size * size];
         for (int i = 0; i < colors.Length; i++)
         {
             colors[i] = Color.white;
         }
+
         texture.SetPixels(colors);
 
 // Обчислюємо координати прямокутника
-        Vector2 center = new Vector2(250, 250);
-        float width = 100f;
-        float height = 300f;
-        float angle = 90;
 
-        Vector2[] corners = new Vector2[4];
-        corners[1] = center + (Vector2)(Quaternion.Euler(0f, 0f, angle) * new Vector2(-width / 2, -height / 2));
-        corners[0] = center + (Vector2)(Quaternion.Euler(0f, 0f, angle) * new Vector2(width / 2, -height / 2));
-        corners[2] = center + (Vector2)(Quaternion.Euler(0f, 0f, angle) * new Vector2(-width / 2, height / 2));
-        corners[3] = center + (Vector2)(Quaternion.Euler(0f, 0f, angle) * new Vector2(width / 2, height / 2));
+
+        List<Vector2[]> cornersSets = new List<Vector2[]>();
+        float roomsMaxSize;
+        float horizontalOffset;
+        float verticalOffset;
+        if ((maxRight - minLeft) > (maxTop - minBottom))
+        {
+            roomsMaxSize = (maxRight - minLeft);
+            horizontalOffset = 0;
+            verticalOffset = -(float)(maxTop - minBottom-maxRight + minLeft) / (maxRight - minLeft) * size / 2;
+        }
+        else
+        {
+            roomsMaxSize = (maxTop - minBottom);
+            horizontalOffset = -(float)(maxRight - minLeft-maxTop + minBottom)/(maxTop - minBottom)   * size / 2;
+            verticalOffset = 0;
+        }
+        
+        foreach (var room in rooms)
+        {
+            float texLeft = (float)(room.left - minLeft) / (roomsMaxSize) * size+horizontalOffset;
+            float texRight = (float)(room.right - minLeft) / (roomsMaxSize) * size+horizontalOffset;
+            float texBottom = (float)(room.bottom - minBottom) / (roomsMaxSize) * size+verticalOffset;
+            float texTop = (float)(room.top - minBottom) / (roomsMaxSize) * size+verticalOffset;
+            
+            cornersSets.Add(GetSquareCorners(texLeft, texRight, texBottom, texTop, 0));
+        }        
+        foreach (var room in corridors)
+        {
+            float texLeft = (float)(room.left - minLeft) / (roomsMaxSize) * size+horizontalOffset;
+            float texRight = (float)(room.right - minLeft) / (roomsMaxSize) * size+horizontalOffset;
+            float texBottom = (float)(room.bottom - minBottom) / (roomsMaxSize) * size+verticalOffset;
+            float texTop = (float)(room.top - minBottom) / (roomsMaxSize) * size+verticalOffset;
+            
+            cornersSets.Add(GetSquareCorners(texLeft, texRight, texBottom, texTop, 90-room.angle));
+            Debug.Log(room.angle);
+        }
 
 // Малюємо прямокутник на текстурі
         Color blue = Color.blue;
-        for (int y = 0; y < 500; y++)
+        for (int y = 0; y < size; y++)
         {
-            for (int x = 0; x < 500; x++)
+            for (int x = 0; x < size; x++)
             {
-                if (IsInsideTurnedPolygon(new Vector2(x, y), corners))
+                foreach (var corners in cornersSets)
                 {
-                    texture.SetPixel(x, y, blue);
+
+                    if (PolygonChecker.IsInsideTurnedPolygon(new Vector2(x, y), corners))
+                    {
+                        texture.SetPixel(x, y, blue);
+                    }
                 }
             }
         }
@@ -93,37 +107,22 @@ public class TextureSetter : MonoBehaviour
         texture.Apply();
 
         // присвоєння текстури площині
-        GetComponent<Renderer>().material.mainTexture = texture;
+        GetComponent<Renderer>().sharedMaterial.mainTexture = texture;
     }
 
-    // private bool IsInsidePolygon(Vector2 point,Room room)
-    // {
-    //     
-    // }
-    private bool CheckOnCorridor(Vector2 room1,Vector2 room2, int width)
+    private Vector2[] GetSquareCorners(float left, float right, float bottom, float up, float angle)
     {
-        Vector2 positionBetween =  (room1 + room2)/2;
-        return true;
-        ////////////////////////////////////////////////////////////
-    }
-    private bool IsInsideTurnedPolygon(Vector2 point, Vector2[] polygon)
-    {
-        int numVertices = polygon.Length;
-        int j = numVertices - 1;
-        bool inside = false;
+        Vector2 center = new Vector2((left + right) / 2, (bottom + up) / 2);
+        float width = right - left;
+        float height = up - bottom;
 
-        for (int i = 0; i < numVertices; i++)
-        {
-            if (polygon[i].y < point.y && polygon[j].y >= point.y || polygon[j].y < point.y && polygon[i].y >= point.y)
-            {
-                if (polygon[i].x + (point.y - polygon[i].y) / (polygon[j].y - polygon[i].y) * (polygon[j].x - polygon[i].x) < point.x)
-                {
-                    inside = !inside;
-                }
-            }
-            j = i;
-        }
-
-        return inside;
+        Vector2[] corners = new Vector2[4];
+        corners[1] = center + (Vector2)(Quaternion.Euler(0f, 0f, angle) * new Vector2(-width / 2f, -height / 2f));
+        corners[0] = center + (Vector2)(Quaternion.Euler(0f, 0f, angle) * new Vector2(width / 2f, -height / 2f));
+        corners[2] = center + (Vector2)(Quaternion.Euler(0f, 0f, angle) * new Vector2(-width / 2f, height / 2f));
+        corners[3] = center + (Vector2)(Quaternion.Euler(0f, 0f, angle) * new Vector2(width / 2f, height / 2f));
+        return corners;
     }
+
+
 }

@@ -5,7 +5,7 @@ using UnityEngine;
 [Serializable]
 public class GraphRoom : Room
 {
-   public int angle;
+   public float angle;
    public bool placed=false;
    public int index;
    public List<GraphRoom> connections=new List<GraphRoom>();
@@ -15,8 +15,13 @@ public class GraphRoom : Room
       for (var i = 0; i < placedRooms.Length; i++)
       {
          var room = placedRooms[i];
+         if (right ==22)
+         {
+            Debug.Log(12);
+         }
          if (room!=null && room.placed && room.index!=index)
          {
+        
             if (!CanBePlacedWith(room))
             {
                return false;
@@ -54,6 +59,14 @@ public class GraphRoom : Room
       this.right = room.right;
       this.bottom = room.bottom;
       this.top = room.top;
+   }
+   public  GraphRoom(Vector2 scale,Vector2 position,float angle)
+   {
+      this.left = (int)(position.x - scale.x / 2);
+      this.right = (int)(position.x + scale.x / 2);
+      this.bottom = (int)(position.y - scale.y / 2);
+      this.top = (int)(position.y + scale.y / 2);
+      this.angle =angle;
    }
    public GraphRoom(int index )
    {

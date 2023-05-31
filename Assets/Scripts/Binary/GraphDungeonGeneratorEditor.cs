@@ -19,6 +19,7 @@ public class GraphDungeonGeneratorEditor : Editor
     private SerializedProperty corridorLenghtRange;
     private SerializedProperty roomSizeRange;
     private SerializedProperty randomAngles;
+    private SerializedProperty rightAngle;
     private SerializedProperty camera;
 
     private void OnEnable()
@@ -33,6 +34,7 @@ public class GraphDungeonGeneratorEditor : Editor
         corridorLenghtRange = serializedObject.FindProperty("corridorLenghtRange");
         roomSizeRange = serializedObject.FindProperty("roomSizeRange");
         randomAngles = serializedObject.FindProperty("randomAngles");
+        rightAngle = serializedObject.FindProperty("rightAngle");
         camera = serializedObject.FindProperty("camera");
     }
 
@@ -52,6 +54,7 @@ public class GraphDungeonGeneratorEditor : Editor
         EditorGUILayout.PropertyField(corridorLenghtRange);
         EditorGUILayout.PropertyField(roomSizeRange);
         EditorGUILayout.PropertyField(randomAngles);
+        EditorGUILayout.PropertyField(rightAngle);
         EditorGUILayout.PropertyField(camera);
         if(GUILayout.Button("Build Object"))
         {
