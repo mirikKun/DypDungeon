@@ -68,4 +68,17 @@ public static class PolygonChecker
 
         return (ua >= 0 && ua <= 1) && (ub >= 0 && ub <= 1);
     }
+    public static Vector2[] GetSquareCorners(float left, float right, float bottom, float up, float angle)
+    {
+        Vector2 center = new Vector2((left + right) / 2, (bottom + up) / 2);
+        float width = right - left;
+        float height = up - bottom;
+
+        Vector2[] corners = new Vector2[4];
+        corners[1] = center + (Vector2)(Quaternion.Euler(0f, 0f, angle) * new Vector2(-width / 2f, -height / 2f));
+        corners[0] = center + (Vector2)(Quaternion.Euler(0f, 0f, angle) * new Vector2(width / 2f, -height / 2f));
+        corners[2] = center + (Vector2)(Quaternion.Euler(0f, 0f, angle) * new Vector2(-width / 2f, height / 2f));
+        corners[3] = center + (Vector2)(Quaternion.Euler(0f, 0f, angle) * new Vector2(width / 2f, height / 2f));
+        return corners;
+    }
 }

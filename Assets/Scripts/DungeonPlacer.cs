@@ -26,18 +26,15 @@ public class DungeonPlacer : MonoBehaviour
  
         return corridor;
     }
-    public DungeonSegment PlaceCorridor(Vector3 corridorScale, float xPos, float yPos,bool horizontal,Vector3 dungeonOffset)
+    public DungeonSegment PlaceCorridor(GraphRoom room,Vector3 dungeonOffset)
     {
-        Vector3 positionBetween = new Vector3(xPos, 0, yPos);
+        Vector3 positionBetween = new Vector3(room.GetPosition().x, 0, room.GetPosition().y);
         DungeonSegment corridor =
             Instantiate(cube, transform.position + positionBetween - dungeonOffset, Quaternion.identity);
         corridor.SetParent(transform);
-        corridor.SetupScale(corridorScale);
-        float angle=0;
-        if (horizontal)
-        {
-            
-        }
+        corridor.SetupScale( new Vector3(room.GetWidth(), 10, room.GetHeight()));
+        float angle=room.angle+90;
+        
         corridor.SetupRotation(angle);
         corridor.gameObject.name = "corridor";
 

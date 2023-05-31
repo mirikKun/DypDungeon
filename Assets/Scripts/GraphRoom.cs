@@ -15,10 +15,7 @@ public class GraphRoom : Room
       for (var i = 0; i < placedRooms.Length; i++)
       {
          var room = placedRooms[i];
-         if (right ==22)
-         {
-            Debug.Log(12);
-         }
+
          if (room!=null && room.placed && room.index!=index)
          {
         
@@ -66,7 +63,7 @@ public class GraphRoom : Room
       this.right = (int)(position.x + scale.x / 2);
       this.bottom = (int)(position.y - scale.y / 2);
       this.top = (int)(position.y + scale.y / 2);
-      this.angle =angle;
+      this.angle =90-angle;
    }
    public GraphRoom(int index )
    {

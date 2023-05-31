@@ -73,7 +73,7 @@ public class TextureSetter : MonoBehaviour
             float texBottom = (float)(room.bottom - minBottom) / (roomsMaxSize) * size+verticalOffset;
             float texTop = (float)(room.top - minBottom) / (roomsMaxSize) * size+verticalOffset;
             
-            cornersSets.Add(GetSquareCorners(texLeft, texRight, texBottom, texTop, 0));
+            cornersSets.Add(PolygonChecker.GetSquareCorners(texLeft, texRight, texBottom, texTop, 0));
         }        
         foreach (var room in corridors)
         {
@@ -82,7 +82,7 @@ public class TextureSetter : MonoBehaviour
             float texBottom = (float)(room.bottom - minBottom) / (roomsMaxSize) * size+verticalOffset;
             float texTop = (float)(room.top - minBottom) / (roomsMaxSize) * size+verticalOffset;
             
-            cornersSets.Add(GetSquareCorners(texLeft, texRight, texBottom, texTop, 90-room.angle));
+            cornersSets.Add(PolygonChecker.GetSquareCorners(texLeft, texRight, texBottom, texTop, room.angle-90));
             Debug.Log(room.angle);
         }
 
@@ -110,19 +110,7 @@ public class TextureSetter : MonoBehaviour
         GetComponent<Renderer>().sharedMaterial.mainTexture = texture;
     }
 
-    private Vector2[] GetSquareCorners(float left, float right, float bottom, float up, float angle)
-    {
-        Vector2 center = new Vector2((left + right) / 2, (bottom + up) / 2);
-        float width = right - left;
-        float height = up - bottom;
 
-        Vector2[] corners = new Vector2[4];
-        corners[1] = center + (Vector2)(Quaternion.Euler(0f, 0f, angle) * new Vector2(-width / 2f, -height / 2f));
-        corners[0] = center + (Vector2)(Quaternion.Euler(0f, 0f, angle) * new Vector2(width / 2f, -height / 2f));
-        corners[2] = center + (Vector2)(Quaternion.Euler(0f, 0f, angle) * new Vector2(-width / 2f, height / 2f));
-        corners[3] = center + (Vector2)(Quaternion.Euler(0f, 0f, angle) * new Vector2(width / 2f, height / 2f));
-        return corners;
-    }
 
 
 }

@@ -80,7 +80,7 @@ public class GraphDungeonGenerator : MonoBehaviour
 
         //SetDungeonGeneration(FindObjectOfType<Dungeon3DGenerator>());
         //FindObjectOfType<Dungeon3DGenerator>().GenerateMesh();
-      //  FindObjectOfType<TextureSetter>().SetTexturesByRooms(rooms, corridors.ToArray());
+        FindObjectOfType<TextureSetter>().SetTexturesByRooms(rooms, corridors.ToArray());
     }
 
     public void SetDungeonGeneration(Dungeon3DGenerator generator)
@@ -588,30 +588,66 @@ public class GraphDungeonGenerator : MonoBehaviour
                 {
                     if (graph[i, j] == 1 && rooms[j].placed)
                     {
-                        if (RoomAreDiagonal(rooms[i], rooms[j]) || !rightAngle)
-                        {
-                            dungeonPlacer.PlaceCorridor(corridorWidth, rooms[i].GetPosition(), rooms[j].GetPosition(),
-                                Vector3.zero);
-                            Vector2 scale = new Vector2(Vector2.Distance(rooms[i].GetPosition(),rooms[j].GetPosition()), corridorWidth);               
-                            Vector2 position = (rooms[j].GetPosition() + rooms[i].GetPosition())/2f;     
-                            Vector2 direction = rooms[i].GetPosition() - rooms[j].GetPosition();
-                            float angle = Mathf.Atan2(direction.x, direction.y) * Mathf.Rad2Deg;
-      
-                            corridors.Add(new GraphRoom(scale,position,angle));
-
-                        }
-                        else
-                        {
-                            AddSimpleCorridor(rooms[i], rooms[j]);
-                        }
+                        GraphRoom newRoom = GenerateCorridor(rooms[i],rooms[j]);
+                        corridors.Add(newRoom);
+                        dungeonPlacer.PlaceCorridor(newRoom,
+                                 Vector3.zero);
+                        // if (RoomAreDiagonal(rooms[i], rooms[j]) || !rightAngle)
+                        // {
+                        //     dungeonPlacer.PlaceCorridor(corridorWidth, rooms[i].GetPosition(), rooms[j].GetPosition(),
+                        //         Vector3.zero);
+                        //     Vector2 scale = new Vector2(Vector2.Distance(rooms[i].GetPosition(),rooms[j].GetPosition()), corridorWidth);               
+                        //     Vector2 position = (rooms[j].GetPosition() + rooms[i].GetPosition())/2f;     
+                        //     Vector2 direction = rooms[i].GetPosition() - rooms[j].GetPosition();
+                        //     float angle = Mathf.Atan2(direction.x, direction.y) * Mathf.Rad2Deg;
+                        //
+                        //     corridors.Add(new GraphRoom(scale,position,angle));
+                        //
+                        // }
+                        // else
+                        // {
+                        //     AddSimpleCorridor(rooms[i], rooms[j]);
+                        // }
                     }
                 }
             }
         }
+
+        CheckSSSSSSs(rooms[3], corridors[4]);
+
         // StartCoroutine(Placing());
     }
 
-    private void AddSimpleCorridor(Room firstRoom, Room secondRoom)
+    private GraphRoom GenerateCorridor(GraphRoom room1, GraphRoom room2)
+    {
+        GraphRoom newRoom;
+        if (RoomAreDiagonal(room1, room2) || !rightAngle)
+        {
+           // dungeonPlacer.PlaceCorridor(corridorWidth, room1.GetPosition(), room2.GetPosition(), Vector3.zero);
+            Vector2 scale = new Vector2(Vector2.Distance(room1.GetPosition(),room2.GetPosition()), corridorWidth);               
+            Vector2 position = (room2.GetPosition() + room1.GetPosition())/2f;     
+            Vector2 direction = room1.GetPosition() - room2.GetPosition();
+            float angle = Mathf.Atan2(direction.x, direction.y) * Mathf.Rad2Deg;
+
+            newRoom = new GraphRoom(scale, position, angle);
+            //corridors.Add();
+
+        }
+        else
+        {
+            newRoom =GenerateSimpleCorridor(room1, room2);
+        }
+
+        return newRoom;
+    }
+    private void CheckSSSSSSs(GraphRoom room1, GraphRoom room2)
+    {
+        Vector2[] set1 =
+            PolygonChecker.GetSquareCorners(room1.left, room1.right, room1.bottom, room1.top, room1.angle);
+        Vector2[] set2=PolygonChecker.GetSquareCorners(room2.left, room2.right, room2.bottom, room2.top, room2.angle);
+        Debug.Log("Polygons intersect: "+PolygonChecker.ArePolygonsIntersecting(set1,set2));
+    }
+    private GraphRoom GenerateSimpleCorridor(Room firstRoom, Room secondRoom)
     {
         bool horizontal = firstRoom.left > secondRoom.right || firstRoom.right < secondRoom.left;
 
@@ -652,8 +688,9 @@ public class GraphDungeonGenerator : MonoBehaviour
             corridorScale = new Vector3(corridorWidth, 10, lenght);
         }
 
-        dungeonPlacer.PlaceCorridor(corridorScale, xPos, zPos, horizontal, Vector3.zero);
-        corridors.Add(new GraphRoom(new Vector2(corridorScale.x,corridorScale.z),new Vector2(xPos,zPos),90));
+        //dungeonPlacer.PlaceCorridor(corridorScale, xPos, zPos, Vector3.zero);
+        //corridors.Add(new GraphRoom(new Vector2(corridorScale.x,corridorScale.z),new Vector2(xPos,zPos),90));
+        return new GraphRoom(new Vector2(corridorScale.x, corridorScale.z), new Vector2(xPos, zPos), 0);
     }
 
     private float GetCenterOfCovering(int firstStart, int firstEnd, int secondStart, int secondEnd)
