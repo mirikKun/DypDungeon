@@ -82,8 +82,7 @@ public class TextureSetter : MonoBehaviour
             float texBottom = (float)(room.bottom - minBottom) / (roomsMaxSize) * size+verticalOffset;
             float texTop = (float)(room.top - minBottom) / (roomsMaxSize) * size+verticalOffset;
             
-            cornersSets.Add(PolygonChecker.GetSquareCorners(texLeft, texRight, texBottom, texTop, room.angle-90));
-            Debug.Log(room.angle);
+            cornersSets.Add(PolygonChecker.GetSquareCorners(texLeft, texRight, texBottom, texTop, 90-room.angle));
         }
 
 // Малюємо прямокутник на текстурі

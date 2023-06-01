@@ -10,7 +10,7 @@ public class GraphRoom : Room
    public int index;
    public List<GraphRoom> connections=new List<GraphRoom>();
 
-   public bool CanBePlaced(GraphRoom[] placedRooms)
+   public bool CanBePlacedWithRooms(GraphRoom[] placedRooms)
    {
       for (var i = 0; i < placedRooms.Length; i++)
       {
@@ -26,8 +26,36 @@ public class GraphRoom : Room
          }
       }
       return true;
+   } 
+   public bool CanBePlacedWithCorridors(GraphRoom[] placedCorridors,List<GraphRoom> coonects)
+   {
+      for (var i = 0; i < placedCorridors.Length; i++)
+      {
+         var room = placedCorridors[i];
+
+         if (room!=null && room.placed && room.index!=index&&!coonects.Contains(room))
+         {
+            Vector2[] set1 =
+               PolygonChecker.GetSquareCorners(left, right, bottom, top, angle);
+            Vector2[] set2=PolygonChecker.GetSquareCorners(room.left, room.right, room.bottom, room.top, room.angle);
+           // Debug.Log("Polygons intersect: "+PolygonChecker.ArePolygonsIntersecting(set1,set2));
+            if (PolygonChecker.ArePolygonsIntersecting(set1,set2))
+            {
+               return false;
+            }
+         }
+      }
+      return true;
    }
 
+   // private bool IsIn(List<GraphRoom> rooms)
+   // {
+   //    foreach (var room in rooms)
+   //    {
+   //       //if(room.left==left&&room.right==right&&room.bottom==bottom&&room)
+   //       if(index==)
+   //    }
+   // }
    public GraphRoom(int left, int right, int bottom, int top)
       : base(left,right,bottom,top)
    {
@@ -59,10 +87,11 @@ public class GraphRoom : Room
    }
    public  GraphRoom(Vector2 scale,Vector2 position,float angle)
    {
-      this.left = (int)(position.x - scale.x / 2);
-      this.right = (int)(position.x + scale.x / 2);
-      this.bottom = (int)(position.y - scale.y / 2);
-      this.top = (int)(position.y + scale.y / 2);
+      this.left = Mathf.RoundToInt(position.x - scale.x / 2);
+      this.right = Mathf.RoundToInt(position.x + scale.x / 2);
+      this.bottom = Mathf.RoundToInt(position.y - scale.y / 2);
+      this.top = Mathf.RoundToInt(position.y + scale.y / 2);
+   
       this.angle =90-angle;
    }
    public GraphRoom(int index )

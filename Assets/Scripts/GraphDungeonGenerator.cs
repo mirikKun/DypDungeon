@@ -420,20 +420,28 @@ public class GraphDungeonGenerator : MonoBehaviour
                 offset + lastPosition);
             rooms[roomIndex].CopyPosition(newRoom);
             rooms[roomIndex].placed = true;
-            corridorSpaces[corridorIndex - 1] = newRoom.GetRoomInBetween(GetCorridorLenght() / 5, previousRoom);
+            List<GraphRoom> curCorridors = new List<GraphRoom>();
+            corridorSpaces[corridorIndex - 1] = GenerateCorridor(newRoom,previousRoom);
             corridorSpaces[corridorIndex - 1].placed = true;
-            corridorSpaces[corridorIndex - 1].index = corridorIndex - 1;
+            corridorSpaces[corridorIndex - 1].index =roomCount+ corridorIndex - 1;
+            curCorridors.Add(corridorSpaces[corridorIndex - 1]);
             if (lastInCycle)
             {
-                corridorSpaces[corridorIndex] = newRoom.GetRoomInBetween(GetCorridorLenght() / 5, rooms[chain.exit]);
+                corridorSpaces[corridorIndex] = GenerateCorridor(newRoom, rooms[chain.exit]);
                 corridorSpaces[corridorIndex].placed = true;
-                corridorSpaces[corridorIndex].index = corridorIndex;
+                corridorSpaces[corridorIndex].index =roomCount+ corridorIndex;
+                curCorridors.Add(corridorSpaces[corridorIndex]);
+
             }
 
         
-            if (rooms[roomIndex].CanBePlaced(rooms) && CheckOnCycleSuccess(chain, roomOrder) &&
-                corridorSpaces[corridorIndex - 1].CanBePlaced(corridorSpaces) &&
-                (!lastInCycle || corridorSpaces[corridorIndex].CanBePlaced(corridorSpaces)))
+            if (rooms[roomIndex].CanBePlacedWithRooms(rooms)&&rooms[roomIndex].CanBePlacedWithCorridors(corridorSpaces,curCorridors) && CheckOnCycleSuccess(chain, roomOrder) &&
+                corridorSpaces[corridorIndex - 1].CanBePlacedWithCorridors(corridorSpaces,new List<GraphRoom>()) &&
+                corridorSpaces[corridorIndex - 1].CanBePlacedWithCorridors(rooms,new List<GraphRoom>(){ rooms[roomIndex],previousRoom}) &&
+                (!lastInCycle || corridorSpaces[corridorIndex].CanBePlacedWithCorridors(corridorSpaces,new List<GraphRoom>())
+                    && corridorSpaces[corridorIndex].CanBePlacedWithCorridors(rooms,new List<GraphRoom>(){ rooms[roomIndex], rooms[chain.exit]})
+                    ))
+               // ddd
             {
             
                 if (roomOrder == chain.completeCycle.Count - 1)
@@ -590,31 +598,14 @@ public class GraphDungeonGenerator : MonoBehaviour
                     {
                         GraphRoom newRoom = GenerateCorridor(rooms[i],rooms[j]);
                         corridors.Add(newRoom);
+             
                         dungeonPlacer.PlaceCorridor(newRoom,
                                  Vector3.zero);
-                        // if (RoomAreDiagonal(rooms[i], rooms[j]) || !rightAngle)
-                        // {
-                        //     dungeonPlacer.PlaceCorridor(corridorWidth, rooms[i].GetPosition(), rooms[j].GetPosition(),
-                        //         Vector3.zero);
-                        //     Vector2 scale = new Vector2(Vector2.Distance(rooms[i].GetPosition(),rooms[j].GetPosition()), corridorWidth);               
-                        //     Vector2 position = (rooms[j].GetPosition() + rooms[i].GetPosition())/2f;     
-                        //     Vector2 direction = rooms[i].GetPosition() - rooms[j].GetPosition();
-                        //     float angle = Mathf.Atan2(direction.x, direction.y) * Mathf.Rad2Deg;
-                        //
-                        //     corridors.Add(new GraphRoom(scale,position,angle));
-                        //
-                        // }
-                        // else
-                        // {
-                        //     AddSimpleCorridor(rooms[i], rooms[j]);
-                        // }
+                   
                     }
                 }
             }
         }
-
-        CheckSSSSSSs(rooms[3], corridors[4]);
-
         // StartCoroutine(Placing());
     }
 
@@ -623,15 +614,13 @@ public class GraphDungeonGenerator : MonoBehaviour
         GraphRoom newRoom;
         if (RoomAreDiagonal(room1, room2) || !rightAngle)
         {
-           // dungeonPlacer.PlaceCorridor(corridorWidth, room1.GetPosition(), room2.GetPosition(), Vector3.zero);
-            Vector2 scale = new Vector2(Vector2.Distance(room1.GetPosition(),room2.GetPosition()), corridorWidth);               
+            Vector2 scale = new Vector2(Vector2.Distance(room1.GetPosition(),room2.GetPosition())-corridorWidth*2, corridorWidth);               
             Vector2 position = (room2.GetPosition() + room1.GetPosition())/2f;     
             Vector2 direction = room1.GetPosition() - room2.GetPosition();
             float angle = Mathf.Atan2(direction.x, direction.y) * Mathf.Rad2Deg;
+            newRoom = new GraphRoom(scale, position, 90-angle);
 
-            newRoom = new GraphRoom(scale, position, angle);
-            //corridors.Add();
-
+            Debug.Log(scale);
         }
         else
         {
@@ -640,13 +629,10 @@ public class GraphDungeonGenerator : MonoBehaviour
 
         return newRoom;
     }
-    private void CheckSSSSSSs(GraphRoom room1, GraphRoom room2)
-    {
-        Vector2[] set1 =
-            PolygonChecker.GetSquareCorners(room1.left, room1.right, room1.bottom, room1.top, room1.angle);
-        Vector2[] set2=PolygonChecker.GetSquareCorners(room2.left, room2.right, room2.bottom, room2.top, room2.angle);
-        Debug.Log("Polygons intersect: "+PolygonChecker.ArePolygonsIntersecting(set1,set2));
-    }
+    
+    
+
+    
     private GraphRoom GenerateSimpleCorridor(Room firstRoom, Room secondRoom)
     {
         bool horizontal = firstRoom.left > secondRoom.right || firstRoom.right < secondRoom.left;

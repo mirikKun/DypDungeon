@@ -33,6 +33,7 @@ public class DungeonPlacer : MonoBehaviour
             Instantiate(cube, transform.position + positionBetween - dungeonOffset, Quaternion.identity);
         corridor.SetParent(transform);
         corridor.SetupScale( new Vector3(room.GetWidth(), 10, room.GetHeight()));
+     
         float angle=room.angle+90;
         
         corridor.SetupRotation(angle);
