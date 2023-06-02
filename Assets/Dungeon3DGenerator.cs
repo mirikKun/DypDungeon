@@ -12,13 +12,13 @@ public class Dungeon3DGenerator : MonoBehaviour
     [SerializeField] private float height=1.4f;
     private List<MeshFilter> dungeonSegments=new List<MeshFilter>();
     public DungeonSegment cube;
-    // Start is called before the first frame update
-    void Start()
-    {
-        // graphDungeonGenerator.SetDungeonGeneration(this);
-         StartCoroutine( meshCombiner.Combining3DMesh(defSegments));
 
-    }
+    // void Start()
+    // {
+    //     // graphDungeonGenerator.SetDungeonGeneration(this);
+    //      StartCoroutine( meshCombiner.Combining3DMesh(defSegments));
+    //
+    // }
 
     public void ClearMeshes()
     {
@@ -42,7 +42,7 @@ public class Dungeon3DGenerator : MonoBehaviour
         DungeonSegment corridor =
             Instantiate(cube, transform.position + positionBetween - dungeonOffset, Quaternion.identity);
         corridor.SetParent(transform);
-        corridor.SetupScale(new Vector3(width,height-0.02f,Vector3.Distance(firstRoom,secondRoom)*0.8f));
+        corridor.SetupScale(new Vector3(width,height-0.05f,Vector3.Distance(firstRoom,secondRoom)*0.8f));
         Vector2 direction = firstRoom - secondRoom;
         float angle = Mathf.Atan2(direction.x, direction.y) * Mathf.Rad2Deg;
         corridor.SetupRotation(angle);

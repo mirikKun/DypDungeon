@@ -78,8 +78,8 @@ public class GraphDungeonGenerator : MonoBehaviour
         ShortestCycleOrPath();
         GenerateRooms();
 
-        //SetDungeonGeneration(FindObjectOfType<Dungeon3DGenerator>());
-        //FindObjectOfType<Dungeon3DGenerator>().GenerateMesh();
+        SetDungeonGeneration(FindObjectOfType<Dungeon3DGenerator>());
+        FindObjectOfType<Dungeon3DGenerator>().GenerateMesh();
         FindObjectOfType<TextureSetter>().SetTexturesByRooms(rooms, corridors.ToArray());
     }
 
@@ -382,7 +382,8 @@ public class GraphDungeonGenerator : MonoBehaviour
 
         int roomIndex = chain.completeCycle[roomOrder];
 
-        Vector2Int lastPosition = new Vector2Int(previousRoom.left, previousRoom.bottom);
+         Vector2Int lastPosition = new Vector2Int(previousRoom.left, previousRoom.bottom);
+     
         bool lastInCycle = chain.cycle && roomOrder == chain.completeCycle.Count - 1;
 
         //int randDirectionX = Random.Range(0, 4);
@@ -421,29 +422,32 @@ public class GraphDungeonGenerator : MonoBehaviour
             rooms[roomIndex].CopyPosition(newRoom);
             rooms[roomIndex].placed = true;
             List<GraphRoom> curCorridors = new List<GraphRoom>();
-            corridorSpaces[corridorIndex - 1] = GenerateCorridor(newRoom,previousRoom);
+            corridorSpaces[corridorIndex - 1] = GenerateCorridor(newRoom, previousRoom);
             corridorSpaces[corridorIndex - 1].placed = true;
-            corridorSpaces[corridorIndex - 1].index =roomCount+ corridorIndex - 1;
+            corridorSpaces[corridorIndex - 1].index = roomCount + corridorIndex - 1;
             curCorridors.Add(corridorSpaces[corridorIndex - 1]);
             if (lastInCycle)
             {
                 corridorSpaces[corridorIndex] = GenerateCorridor(newRoom, rooms[chain.exit]);
                 corridorSpaces[corridorIndex].placed = true;
-                corridorSpaces[corridorIndex].index =roomCount+ corridorIndex;
+                corridorSpaces[corridorIndex].index = roomCount + corridorIndex;
                 curCorridors.Add(corridorSpaces[corridorIndex]);
-
             }
 
-        
-            if (rooms[roomIndex].CanBePlacedWithRooms(rooms)&&rooms[roomIndex].CanBePlacedWithCorridors(corridorSpaces,curCorridors) && CheckOnCycleSuccess(chain, roomOrder) &&
-                corridorSpaces[corridorIndex - 1].CanBePlacedWithCorridors(corridorSpaces,new List<GraphRoom>()) &&
-                corridorSpaces[corridorIndex - 1].CanBePlacedWithCorridors(rooms,new List<GraphRoom>(){ rooms[roomIndex],previousRoom}) &&
-                (!lastInCycle || corridorSpaces[corridorIndex].CanBePlacedWithCorridors(corridorSpaces,new List<GraphRoom>())
-                    && corridorSpaces[corridorIndex].CanBePlacedWithCorridors(rooms,new List<GraphRoom>(){ rooms[roomIndex], rooms[chain.exit]})
-                    ))
-               // ddd
+
+            if (rooms[roomIndex].CanBePlacedWithRooms(rooms) &&
+                rooms[roomIndex].CanBePlacedWithCorridors(corridorSpaces, curCorridors) &&
+                CheckOnCycleSuccess(chain, roomOrder) &&
+                corridorSpaces[corridorIndex - 1].CanBePlacedWithCorridors(corridorSpaces, new List<GraphRoom>()) &&
+                corridorSpaces[corridorIndex - 1]
+                    .CanBePlacedWithCorridors(rooms, new List<GraphRoom>() { rooms[roomIndex], previousRoom }) &&
+                (!lastInCycle || corridorSpaces[corridorIndex]
+                        .CanBePlacedWithCorridors(corridorSpaces, new List<GraphRoom>())
+                    && corridorSpaces[corridorIndex].CanBePlacedWithCorridors(rooms,
+                        new List<GraphRoom>() { rooms[roomIndex], rooms[chain.exit] })
+                ))
+                // ddd
             {
-            
                 if (roomOrder == chain.completeCycle.Count - 1)
                 {
                     if (chainIndex == decomposedChains.Count - 1 || GenerateByChain(
@@ -452,9 +456,8 @@ public class GraphDungeonGenerator : MonoBehaviour
                     {
                         return true;
                     }
-                   
+
                     continue;
-                    
                 }
 
                 if (GenerateByChain(newRoom, chain, roomOrder + 1, chainIndex))
@@ -596,12 +599,11 @@ public class GraphDungeonGenerator : MonoBehaviour
                 {
                     if (graph[i, j] == 1 && rooms[j].placed)
                     {
-                        GraphRoom newRoom = GenerateCorridor(rooms[i],rooms[j]);
+                        GraphRoom newRoom = GenerateCorridor(rooms[i], rooms[j]);
                         corridors.Add(newRoom);
-             
+
                         dungeonPlacer.PlaceCorridor(newRoom,
-                                 Vector3.zero);
-                   
+                            Vector3.zero);
                     }
                 }
             }
@@ -614,25 +616,24 @@ public class GraphDungeonGenerator : MonoBehaviour
         GraphRoom newRoom;
         if (RoomAreDiagonal(room1, room2) || !rightAngle)
         {
-            Vector2 scale = new Vector2(Vector2.Distance(room1.GetPosition(),room2.GetPosition())-corridorWidth*2, corridorWidth);               
-            Vector2 position = (room2.GetPosition() + room1.GetPosition())/2f;     
+            Vector2 scale = new Vector2(Vector2.Distance(room1.GetPosition(), room2.GetPosition()) - corridorWidth * 2,
+                corridorWidth);
+            Vector2 position = (room2.GetPosition() + room1.GetPosition()) / 2f;
             Vector2 direction = room1.GetPosition() - room2.GetPosition();
             float angle = Mathf.Atan2(direction.x, direction.y) * Mathf.Rad2Deg;
-            newRoom = new GraphRoom(scale, position, 90-angle);
+            newRoom = new GraphRoom(scale, position, 90 - angle);
 
             Debug.Log(scale);
         }
         else
         {
-            newRoom =GenerateSimpleCorridor(room1, room2);
+            newRoom = GenerateSimpleCorridor(room1, room2);
         }
 
         return newRoom;
     }
-    
-    
 
-    
+
     private GraphRoom GenerateSimpleCorridor(Room firstRoom, Room secondRoom)
     {
         bool horizontal = firstRoom.left > secondRoom.right || firstRoom.right < secondRoom.left;
@@ -725,11 +726,12 @@ public class GraphDungeonGenerator : MonoBehaviour
 
     private bool RoomAreDiagonal(Room room1, Room room2)
     {
-        bool rightTop = room1.right < room2.left + corridorWidth && room1.top < room2.bottom + corridorWidth;
-        bool rightBottom = room1.right < room2.left + corridorWidth && room1.bottom > room2.top - corridorWidth;
+        float offset = corridorWidth*2f;
+        bool rightTop = room1.right < room2.left + offset && room1.top < room2.bottom + offset;
+        bool rightBottom = room1.right < room2.left + offset && room1.bottom > room2.top - offset;
 
-        bool leftTop = room1.left > room2.right - corridorWidth && room1.top < room2.bottom + corridorWidth;
-        bool leftBottom = room1.left > room2.right - corridorWidth && room1.bottom > room2.top - corridorWidth;
+        bool leftTop = room1.left > room2.right - offset && room1.top < room2.bottom + offset;
+        bool leftBottom = room1.left > room2.right - offset && room1.bottom > room2.top - offset;
 
         return rightTop || rightBottom || leftTop || leftBottom;
     }
