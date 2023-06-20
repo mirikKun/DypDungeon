@@ -77,7 +77,7 @@ namespace Parabox.CSG
             Node b = new Node(csg_model_b.ToPolygons());
         
             List<Polygon> polygons = Node.Union(a, b).AllPolygons();
-        
+        Debug.Log(polygons);
             return new Model(polygons);
         }
         

@@ -48,7 +48,7 @@ public class DungeonPlacer : MonoBehaviour
 
         DungeonSegment room = Instantiate(cube, transform.position + roomPosition - dungeonOffset, Quaternion.identity);
         room.SetParent(transform);
-
+        room.SetText(index+1);
         room.SetupScale(new Vector3(r.GetWidth(), 10, r.GetHeight()));
         r.dungeonSegment = room;
         room.gameObject.name = "room "+index;

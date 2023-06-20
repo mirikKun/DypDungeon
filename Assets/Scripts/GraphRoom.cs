@@ -38,7 +38,6 @@ public class GraphRoom : Room
             Vector2[] set1 =
                PolygonChecker.GetSquareCorners(left, right, bottom, top, angle);
             Vector2[] set2=PolygonChecker.GetSquareCorners(room.left, room.right, room.bottom, room.top, room.angle);
-           // Debug.Log("Polygons intersect: "+PolygonChecker.ArePolygonsIntersecting(set1,set2));
             if (PolygonChecker.ArePolygonsIntersecting(set1,set2))
             {
                return false;
@@ -47,15 +46,6 @@ public class GraphRoom : Room
       }
       return true;
    }
-
-   // private bool IsIn(List<GraphRoom> rooms)
-   // {
-   //    foreach (var room in rooms)
-   //    {
-   //       //if(room.left==left&&room.right==right&&room.bottom==bottom&&room)
-   //       if(index==)
-   //    }
-   // }
    public GraphRoom(int left, int right, int bottom, int top)
       : base(left,right,bottom,top)
    {
@@ -87,10 +77,10 @@ public class GraphRoom : Room
    }
    public  GraphRoom(Vector2 scale,Vector2 position,float angle)
    {
-      this.left = Mathf.RoundToInt(position.x - scale.x / 2);
-      this.right = Mathf.RoundToInt(position.x + scale.x / 2);
-      this.bottom = Mathf.RoundToInt(position.y - scale.y / 2);
-      this.top = Mathf.RoundToInt(position.y + scale.y / 2);
+      this.left = Mathf.CeilToInt(position.x - scale.x / 2f);
+      this.right = Mathf.CeilToInt(position.x + scale.x / 2f);
+      this.bottom = Mathf.CeilToInt(position.y - scale.y / 2f);
+      this.top = Mathf.CeilToInt(position.y + scale.y / 2f);
    
       this.angle =90-angle;
    }

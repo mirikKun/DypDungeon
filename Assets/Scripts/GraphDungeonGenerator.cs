@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using UnityEngine;
+using UnityEngine.UIElements;
 using Random = UnityEngine.Random;
 
 [ExecuteInEditMode]
@@ -11,7 +12,7 @@ public class GraphDungeonGenerator : MonoBehaviour
 {
     [SerializeField] private int roomSize = 10;
     [SerializeField] private int randomSeed = 10;
-    [SerializeField] private int roomCount = 13;
+    public int roomCount = 13;
     [SerializeField] private float[] chances = { 0.45f, 0.84f, 1f, 1 };
 
     [SerializeField] private int corridorLenght = 10;
@@ -25,6 +26,8 @@ public class GraphDungeonGenerator : MonoBehaviour
     [SerializeField] private int corridorLenghtRange = 5;
     [SerializeField] private int roomSizeRange = 5;
     [SerializeField] private Transform camera;
+    [SerializeField] private Color dungeonTextureColor=Color.black;
+    [SerializeField] private Color backgroundTextureColor=Color.white;
     private DungeonPlacer dungeonPlacer;
     private GraphRoom[] rooms;
     private int iterations;
@@ -47,15 +50,14 @@ public class GraphDungeonGenerator : MonoBehaviour
         return false;
     }
 
-
-    private int[,] graph = new int[,]
+    public int[,] graph = new int[,]
     {
-        { 0, 0, 0, 0, 1, 1 },
-        { 0, 0, 0, 1, 0, 0 },
+        { 0, 1, 0, 0, 0, 0 },
+        { 1, 0, 1, 0, 0, 0 },
+        { 0, 1, 0, 1, 0, 0 },
+        { 0, 0, 1, 0, 1, 0 },
         { 0, 0, 0, 1, 0, 1 },
-        { 0, 1, 1, 0, 0, 1 },
-        { 1, 0, 0, 0, 0, 0 },
-        { 1, 0, 1, 1, 0, 0 },
+        { 0, 0, 0, 0, 1, 0 },
     };
 
 
@@ -64,23 +66,68 @@ public class GraphDungeonGenerator : MonoBehaviour
         minRoomDistance = (int)Mathf.Ceil((corridorLenght + corridorLenghtRange - 1) * Mathf.Sqrt(2));
     }
 
-    public void Generate()
+    public void GenerateMatrix()
     {
-        iterations = 0;
-
-        ResetVariables();
-        dungeonPlacer.RemoveEverything();
         Random.InitState(randomSeed);
         PrintMatrix(graph);
         int[,] generatedMatrix = GeneratePlanarGraphAdjacencyMatrix(roomCount);
         PrintSyntaxMatrix(generatedMatrix);
         graph = generatedMatrix;
-        ShortestCycleOrPath();
-        GenerateRooms();
+    }
 
+    public void GenerateDungeon()
+    {
+        roomCount = graph.GetLength(0);
+
+        iterations = 0;
+
+        ResetVariables();
+        dungeonPlacer.RemoveEverything();
+        ShortestCycleOrPath();
+        bool success = GenerateRooms();
+        if (!success)
+        {
+            return;
+        }
+
+        FindObjectOfType<TextureSetter>().SetTexturesByRooms(rooms, corridors.ToArray(),dungeonTextureColor,backgroundTextureColor);
+    }
+    public void SaveTexture()
+    {
+        TextureSetter.SavePng(rooms, corridors.ToArray(),dungeonTextureColor,backgroundTextureColor);
+    }
+
+    public bool CheckMatrix()
+    {
+        if (roomCount != graph.GetLength(0))
+        {
+            return true;
+        }
+
+        for (int y = 0; y < roomCount - 1; y++)
+        {
+            for (int x = y + 1; x < roomCount; x++)
+            {
+                graph[x, y] = graph[y, x];
+            }
+        }
+
+        if (!GraphChecks.IsReachable(graph, 0))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    public void Generate3DDungeon()
+    {
         SetDungeonGeneration(FindObjectOfType<Dungeon3DGenerator>());
         FindObjectOfType<Dungeon3DGenerator>().GenerateMesh();
-        FindObjectOfType<TextureSetter>().SetTexturesByRooms(rooms, corridors.ToArray());
+    }
+    public void Save3DDungeonFbx()
+    {
+        FindObjectOfType<MeshCombiner>().Save3DObjectAsFbx();
     }
 
     public void SetDungeonGeneration(Dungeon3DGenerator generator)
@@ -94,6 +141,7 @@ public class GraphDungeonGenerator : MonoBehaviour
             }
         }
 
+        int corridorIndex = 0;
         for (int i = 0; i < roomCount; i++)
         {
             if (rooms[i].placed)
@@ -102,8 +150,8 @@ public class GraphDungeonGenerator : MonoBehaviour
                 {
                     if (graph[i, j] == 1 && rooms[j].placed)
                     {
-                        generator.PlaceCorridor(corridorWidth, rooms[i].GetPosition(), rooms[j].GetPosition(),
-                            Vector3.zero);
+                        generator.PlaceCorridor(corridors[corridorIndex], Vector3.zero);
+                        corridorIndex++;
                     }
                 }
             }
@@ -382,14 +430,20 @@ public class GraphDungeonGenerator : MonoBehaviour
 
         int roomIndex = chain.completeCycle[roomOrder];
 
-         Vector2Int lastPosition = new Vector2Int(previousRoom.left, previousRoom.bottom);
-     
+        Vector2Int lastPosition = new Vector2Int(previousRoom.left, previousRoom.bottom);
+
         bool lastInCycle = chain.cycle && roomOrder == chain.completeCycle.Count - 1;
 
         //int randDirectionX = Random.Range(0, 4);
         int randDirectionX = Random.Range(0, 4);
 
-        for (int i = 0; i < 8; i++)
+        int maxIterationsCount = 8;
+        if (randomAngles)
+        {
+            maxIterationsCount = 20;
+        }
+
+        for (int i = 0; i < maxIterationsCount; i++)
         {
             int rotation;
             if (i < 4)
@@ -549,7 +603,7 @@ public class GraphDungeonGenerator : MonoBehaviour
         return closeEnough;
     }
 
-    private void GenerateRooms()
+    private bool GenerateRooms()
     {
         GraphRoom firstRoom = new GraphRoom(0, GetRoomSize(), 0, GetRoomSize());
 
@@ -587,6 +641,7 @@ public class GraphDungeonGenerator : MonoBehaviour
         if (!success)
         {
             Debug.Log("Can`t be placed");
+            return false;
         }
 
         PlaceCamera();
@@ -608,6 +663,8 @@ public class GraphDungeonGenerator : MonoBehaviour
                 }
             }
         }
+
+        return true;
         // StartCoroutine(Placing());
     }
 
@@ -616,20 +673,19 @@ public class GraphDungeonGenerator : MonoBehaviour
         GraphRoom newRoom;
         if (RoomAreDiagonal(room1, room2) || !rightAngle)
         {
-            Vector2 scale = new Vector2(Vector2.Distance(room1.GetPosition(), room2.GetPosition()) - corridorWidth * 2,
+            Vector2 scale = new Vector2(Vector2.Distance(room1.GetPosition(), room2.GetPosition()) - corridorWidth * 4,
                 corridorWidth);
             Vector2 position = (room2.GetPosition() + room1.GetPosition()) / 2f;
             Vector2 direction = room1.GetPosition() - room2.GetPosition();
             float angle = Mathf.Atan2(direction.x, direction.y) * Mathf.Rad2Deg;
             newRoom = new GraphRoom(scale, position, 90 - angle);
-
-            Debug.Log(scale);
         }
         else
         {
             newRoom = GenerateSimpleCorridor(room1, room2);
         }
 
+        Debug.Log(newRoom.GetWidth());
         return newRoom;
     }
 
@@ -675,8 +731,7 @@ public class GraphDungeonGenerator : MonoBehaviour
             corridorScale = new Vector3(corridorWidth, 10, lenght);
         }
 
-        //dungeonPlacer.PlaceCorridor(corridorScale, xPos, zPos, Vector3.zero);
-        //corridors.Add(new GraphRoom(new Vector2(corridorScale.x,corridorScale.z),new Vector2(xPos,zPos),90));
+        Debug.Log(corridorScale.x);
         return new GraphRoom(new Vector2(corridorScale.x, corridorScale.z), new Vector2(xPos, zPos), 0);
     }
 
@@ -726,7 +781,7 @@ public class GraphDungeonGenerator : MonoBehaviour
 
     private bool RoomAreDiagonal(Room room1, Room room2)
     {
-        float offset = corridorWidth*2f;
+        float offset = corridorWidth * 2f;
         bool rightTop = room1.right < room2.left + offset && room1.top < room2.bottom + offset;
         bool rightBottom = room1.right < room2.left + offset && room1.bottom > room2.top - offset;
 

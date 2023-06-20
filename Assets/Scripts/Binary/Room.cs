@@ -31,37 +31,37 @@ public class Room
         return new Vector3(xPos, 0, zPos);
     }
 
-    public bool CanBePlacedWith(Room r)
+    public bool CanBePlacedWith(Room square)
     {
       
 
         // перевіряємо, чи квадрати перетинаються по горизонталі (осі X)
-        if (r.left <= right && r.right >= left)
+        if (square.left <= right && square.right >= left)
         {
             // перевіряємо, чи квадрати перетинаються по вертикалі (осі Y)
-            if (r.bottom <= top && r.top >= bottom)
+            if (square.bottom <= top && square.top >= bottom)
             {
                 // якщо квадрати перетинаються, повертаємо true
                 return false;
             }
 
-            if (r.bottom >= top && r.top <= bottom)
+            if (square.bottom >= top && square.top <= bottom)
             {
                 // якщо квадрати перетинаються, повертаємо true
                 return false;
             }
         }
 
-        if (r.left >= right && r.right <= left)
+        if (square.left >= right && square.right <= left)
         {
             // перевіряємо, чи квадрати перетинаються по вертикалі (осі Y)
-            if (r.bottom <= top && r.top >= bottom)
+            if (square.bottom <= top && square.top >= bottom)
             {
                 // якщо квадрати перетинаються, повертаємо true
                 return false;
             }
 
-            if (r.bottom >= top && r.top <= bottom)
+            if (square.bottom >= top && square.top <= bottom)
             {
                 // якщо квадрати перетинаються, повертаємо true
                 return false;
