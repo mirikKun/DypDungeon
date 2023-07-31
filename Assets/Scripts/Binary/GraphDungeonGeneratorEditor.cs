@@ -167,14 +167,7 @@ public class GraphDungeonGeneratorEditor : Editor
                 generator.SaveTexture();
             }
 
-            if (GUILayout.Button("Build 3D dungeon"))
-            {
-                generator.Generate3DDungeon();
-            }
-            if (GUILayout.Button("Save 3D dungeon as fbx"))
-            {
-                generator.Save3DDungeonFbx();
-            }
+         
         }
 
         if (GUILayout.Button("Clear"))

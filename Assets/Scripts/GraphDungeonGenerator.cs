@@ -26,15 +26,14 @@ public class GraphDungeonGenerator : MonoBehaviour
     [SerializeField] private int corridorLenghtRange = 5;
     [SerializeField] private int roomSizeRange = 5;
     [SerializeField] private Transform camera;
-    [SerializeField] private Color dungeonTextureColor=Color.black;
-    [SerializeField] private Color backgroundTextureColor=Color.white;
+    [SerializeField] private Color dungeonTextureColor = Color.black;
+    [SerializeField] private Color backgroundTextureColor = Color.white;
     private DungeonPlacer dungeonPlacer;
     private GraphRoom[] rooms;
+
     private int iterations;
-    private List<Chain> completedCycles = new List<Chain>();
-    private List<Chain> completedNoCycleChains = new List<Chain>();
+
     private List<Chain> decomposedChains = new List<Chain>();
-    private List<int> passedRooms = new List<int>();
     private GraphRoom[] corridorSpaces;
     private List<GraphRoom> corridors;
 
@@ -68,11 +67,8 @@ public class GraphDungeonGenerator : MonoBehaviour
 
     public void GenerateMatrix()
     {
-        Random.InitState(randomSeed);
-        PrintMatrix(graph);
-        int[,] generatedMatrix = GeneratePlanarGraphAdjacencyMatrix(roomCount);
-        PrintSyntaxMatrix(generatedMatrix);
-        graph = generatedMatrix;
+        GraphGenerator graphGenerator = new GraphGenerator(chances, cyclesAllowed, randomSeed);
+        graph = graphGenerator.GenerateGraph(roomCount);
     }
 
     public void GenerateDungeon()
@@ -83,34 +79,31 @@ public class GraphDungeonGenerator : MonoBehaviour
 
         ResetVariables();
         dungeonPlacer.RemoveEverything();
-        ShortestCycleOrPath();
+        var graphHelper = new GraphChainDecomposer(roomCount, graph);
+        decomposedChains = graphHelper.GetChainsOfGraph();
         bool success = GenerateRooms();
         if (!success)
         {
             return;
         }
-
-        FindObjectOfType<TextureSetter>().SetTexturesByRooms(rooms, corridors.ToArray(),dungeonTextureColor,backgroundTextureColor);
+        //FindObjectOfType<TextureSetter>().SetTexturesByRooms(rooms, corridors.ToArray(),dungeonTextureColor,backgroundTextureColor);
     }
+
     public void SaveTexture()
     {
-        TextureSetter.SavePng(rooms, corridors.ToArray(),dungeonTextureColor,backgroundTextureColor);
+        TextureSetter.SavePng(rooms, corridors.ToArray(), dungeonTextureColor, backgroundTextureColor);
     }
 
     public bool CheckMatrix()
     {
+        //check if matrix with right size
         if (roomCount != graph.GetLength(0))
         {
             return true;
         }
 
-        for (int y = 0; y < roomCount - 1; y++)
-        {
-            for (int x = y + 1; x < roomCount; x++)
-            {
-                graph[x, y] = graph[y, x];
-            }
-        }
+        FillMatrixBottom();
+        //check if all rooms are reachable
 
         if (!GraphChecks.IsReachable(graph, 0))
         {
@@ -120,262 +113,23 @@ public class GraphDungeonGenerator : MonoBehaviour
         return true;
     }
 
-    public void Generate3DDungeon()
+    private void FillMatrixBottom()
     {
-        SetDungeonGeneration(FindObjectOfType<Dungeon3DGenerator>());
-        FindObjectOfType<Dungeon3DGenerator>().GenerateMesh();
-    }
-    public void Save3DDungeonFbx()
-    {
-        FindObjectOfType<MeshCombiner>().Save3DObjectAsFbx();
-    }
-
-    public void SetDungeonGeneration(Dungeon3DGenerator generator)
-    {
-        generator.ClearMeshes();
-        for (int i = 0; i < roomCount; i++)
+        for (int y = 0; y < roomCount - 1; y++)
         {
-            if (rooms[i].placed)
+            for (int x = y + 1; x < roomCount; x++)
             {
-                generator.PlaceRoom(rooms[i], Vector3.zero, i);
-            }
-        }
-
-        int corridorIndex = 0;
-        for (int i = 0; i < roomCount; i++)
-        {
-            if (rooms[i].placed)
-            {
-                for (int j = i + 1; j < roomCount; j++)
-                {
-                    if (graph[i, j] == 1 && rooms[j].placed)
-                    {
-                        generator.PlaceCorridor(corridors[corridorIndex], Vector3.zero);
-                        corridorIndex++;
-                    }
-                }
+                graph[x, y] = graph[y, x];
             }
         }
     }
-
 
     private void ResetVariables()
     {
-        completedCycles = new List<Chain>();
-        completedNoCycleChains = new List<Chain>();
         decomposedChains = new List<Chain>();
-        passedRooms = new List<int>();
         corridors = new List<GraphRoom>();
         dungeonPlacer = GetComponent<DungeonPlacer>();
     }
-
-    //Пошук найкоротшого ланцюга
-    public void ShortestChain()
-    {
-        int minLenght = Int32.MaxValue;
-
-        int minIndex = -1;
-        List<Chain> completedPaths;
-        bool cycle = completedCycles.Count > 0;
-        if (cycle)
-        {
-            completedPaths = new List<Chain>(completedCycles);
-        }
-        else
-        {
-            completedPaths = new List<Chain>(completedNoCycleChains);
-        }
-
-        for (int i = 0; i < completedPaths.Count; i++)
-        {
-            if (completedPaths[i].Count() < minLenght)
-            {
-                minLenght = completedPaths[i].Count();
-                minIndex = i;
-            }
-        }
-
-        Chain cycleOrPath = completedPaths[minIndex];
-        decomposedChains.Add(cycleOrPath);
-        completedCycles = new List<Chain>();
-        completedNoCycleChains = new List<Chain>();
-    }
-
-    public void ShortestCycleOrPath()
-    {
-        bool[] visited = new bool[roomCount];
-        int[] parent = new int[roomCount];
-        List<int> cycleOrPath = new List<int>();
-        int startIndex = 0;
-        while (!PathIsFool())
-        {
-            if (CheckOnIterations())
-            {
-                return;
-            }
-
-            if (DFS(startIndex, visited, parent, cycleOrPath))
-            {
-                // знайдено цикл, повертаємо його
-                return;
-            }
-
-            ShortestChain();
-            startIndex = decomposedChains[^1].completeCycle[0];
-            visited = new bool[roomCount];
-            passedRooms = GetAllPassedRooms();
-            parent = new int[roomCount];
-            cycleOrPath = new List<int>();
-        }
-    }
-
-    // рекурсивна функція для пошуку циклу або ланцюга
-    private bool DFS(int u, bool[] visited, int[] parent, List<int> cycleOrPath)
-    {
-        visited[u] = true;
-        cycleOrPath.Add(u);
-
-
-        for (int v = 0; v < roomCount; v++)
-        {
-            if (graph[u, v] != 0)
-            {
-                if (!visited[v] && IsBackToVisited(u, v))
-                {
-                    parent[v] = u + 1;
-                    if (DFS(v, visited, parent, cycleOrPath))
-                        return true;
-                }
-                else if (v != parent[u] - 1 && IsOuter(u))
-                {
-                    List<int> completedCycle = new List<int>(cycleOrPath);
-                    int enterRoomIndex = -1;
-                    int exitRoomIndex = v;
-                    while ((!CoreFound() && completedCycle[0] != v) || !IsOuter(completedCycle[0]))
-                    {
-                        enterRoomIndex = completedCycle[0];
-
-                        completedCycle.RemoveAt(0);
-                    }
-
-
-                    Chain newChain = new Chain(completedCycle, true);
-                    newChain.enter = enterRoomIndex;
-                    newChain.exit = exitRoomIndex;
-                    completedCycles.Add(newChain);
-                }
-                else if (CheckIfEndRoom(u) && IsOuter(u))
-                {
-                    List<int> completedChain = new List<int>(cycleOrPath);
-                    int enterRoomIndex = -1;
-
-                    while (!IsOuter(completedChain[0]))
-                    {
-                        enterRoomIndex = completedChain[0];
-                        completedChain.RemoveAt(0);
-                    }
-
-
-                    Chain newChain = new Chain(completedChain, false);
-                    newChain.enter = enterRoomIndex;
-
-                    completedNoCycleChains.Add(newChain);
-                }
-            }
-        }
-
-        cycleOrPath.RemoveAt(cycleOrPath.Count - 1);
-        visited[u] = false;
-        parent[u] = 0;
-        return false;
-    }
-
-    private bool PathIsFool()
-    {
-        bool[] roomsInPath = new bool[roomCount]; // создаем массив флагов для чисел от 0 до 10
-
-        foreach (var chain in decomposedChains)
-        {
-            foreach (var num in chain.completeCycle)
-            {
-                roomsInPath[num] = true; // устанавливаем флаг для числа в массиве флагов
-            }
-        }
-
-        // проверяем, есть ли какое-то число без флага
-        for (int i = 0; i < roomCount; i++)
-        {
-            if (!roomsInPath[i])
-            {
-                return false; // число не найдено, возвращаем false
-            }
-        }
-
-        return true; // все числа найдены, возвращаем true
-    }
-
-    private List<int> GetAllPassedRooms()
-    {
-        List<int> result = new List<int>();
-        HashSet<int> set = new HashSet<int>();
-
-        foreach (var chain in decomposedChains)
-        {
-            foreach (int roomIndex in chain.completeCycle)
-            {
-                if (!set.Contains(roomIndex))
-                {
-                    result.Add(roomIndex);
-                    set.Add(roomIndex);
-                }
-            }
-        }
-
-        return result;
-    }
-
-    private bool CheckIfEndRoom(int index)
-    {
-        int nearRoomCount = 0;
-        for (int i = 0; i < roomCount; i++)
-        {
-            if (graph[index, i] == 1)
-            {
-                nearRoomCount++;
-            }
-        }
-
-        return nearRoomCount == 1;
-    }
-
-    private bool CoreFound()
-    {
-        return decomposedChains.Count > 0;
-    }
-
-    private bool IsBackToVisited(int cur, int next)
-    {
-        bool backToVisited = IsOuter(cur) && !IsOuter(next);
-
-        return !CoreFound() || !backToVisited;
-    }
-
-    private bool IsOuter(int roomIndex)
-    {
-        if (CoreFound())
-        {
-            foreach (var index in passedRooms)
-            {
-                if (roomIndex == index)
-                {
-                    return false;
-                }
-            }
-        }
-
-        return true;
-    }
-
 
     private int GetCorridorIndex(int roomOrder, int chainIndex)
     {
@@ -434,7 +188,6 @@ public class GraphDungeonGenerator : MonoBehaviour
 
         bool lastInCycle = chain.cycle && roomOrder == chain.completeCycle.Count - 1;
 
-        //int randDirectionX = Random.Range(0, 4);
         int randDirectionX = Random.Range(0, 4);
 
         int maxIterationsCount = 8;
@@ -500,7 +253,6 @@ public class GraphDungeonGenerator : MonoBehaviour
                     && corridorSpaces[corridorIndex].CanBePlacedWithCorridors(rooms,
                         new List<GraphRoom>() { rooms[roomIndex], rooms[chain.exit] })
                 ))
-                // ddd
             {
                 if (roomOrder == chain.completeCycle.Count - 1)
                 {
@@ -665,7 +417,6 @@ public class GraphDungeonGenerator : MonoBehaviour
         }
 
         return true;
-        // StartCoroutine(Placing());
     }
 
     private GraphRoom GenerateCorridor(GraphRoom room1, GraphRoom room2)
@@ -685,7 +436,6 @@ public class GraphDungeonGenerator : MonoBehaviour
             newRoom = GenerateSimpleCorridor(room1, room2);
         }
 
-        Debug.Log(newRoom.GetWidth());
         return newRoom;
     }
 
@@ -731,7 +481,6 @@ public class GraphDungeonGenerator : MonoBehaviour
             corridorScale = new Vector3(corridorWidth, 10, lenght);
         }
 
-        Debug.Log(corridorScale.x);
         return new GraphRoom(new Vector2(corridorScale.x, corridorScale.z), new Vector2(xPos, zPos), 0);
     }
 
@@ -822,196 +571,6 @@ public class GraphDungeonGenerator : MonoBehaviour
 
         camera.position = new Vector3((minLeft + maxRight) / 2f, camera.position.y, (minBottom + maxTop) / 2f);
     }
-
-    private IEnumerator Placing()
-    {
-        for (int i = 0; i < decomposedChains.Count; i++)
-        {
-            for (int j = 0; j < decomposedChains[i].completeCycle.Count; j++)
-            {
-                if (rooms[decomposedChains[i].completeCycle[j]].placed)
-                {
-                    dungeonPlacer.PlaceRoom(rooms[decomposedChains[i].completeCycle[j]], Vector3.zero,
-                        decomposedChains[i].completeCycle[j]);
-                }
-                else
-                {
-                    dungeonPlacer.PlaceRoom(rooms[decomposedChains[i].completeCycle[j]], Vector3.down * 10,
-                        decomposedChains[i].completeCycle[j]);
-                }
-
-                yield return new WaitForSeconds(0.5f);
-                if (j < decomposedChains[i].completeCycle.Count - 1)
-                {
-                    dungeonPlacer.PlaceCorridor(corridorWidth,
-                        rooms[decomposedChains[i].completeCycle[j]].GetPosition(),
-                        rooms[decomposedChains[i].completeCycle[j + 1]].GetPosition(), Vector3.zero);
-                }
-                else if (decomposedChains[i].cycle)
-                {
-                    dungeonPlacer.PlaceCorridor(corridorWidth,
-                        rooms[decomposedChains[i].completeCycle[j]].GetPosition(),
-                        rooms[decomposedChains[i].exit].GetPosition(), Vector3.zero);
-                }
-
-                yield return new WaitForSeconds(0.5f);
-            }
-
-            if (i < decomposedChains.Count - 1)
-            {
-                dungeonPlacer.PlaceCorridor(corridorWidth, rooms[decomposedChains[i + 1].enter].GetPosition(),
-                    rooms[decomposedChains[i + 1].completeCycle[0]].GetPosition(), Vector3.zero);
-            }
-
-            yield return new WaitForSeconds(1.5f);
-        }
-    }
-
-    private void PrintMatrix(int[,] matrix)
-    {
-        string strMatrix = "";
-        for (int i = 0; i < matrix.GetLength(0); i++)
-        {
-            for (int j = 0; j < matrix.GetLength(1); j++)
-            {
-                strMatrix += (matrix[i, j] + " ");
-            }
-
-            strMatrix += '\n';
-        }
-
-        Debug.Log(strMatrix);
-    }
-
-    private void PrintSyntaxMatrix(int[,] matrix)
-    {
-        string output = "{\n";
-        for (int i = 0; i < matrix.GetLength(0); i++)
-        {
-            output += "    { ";
-            for (int j = 0; j < matrix.GetLength(1); j++)
-            {
-                output += matrix[i, j];
-                if (j < matrix.GetLength(1) - 1)
-                    output += ", ";
-            }
-
-            output += " },\n";
-        }
-
-        output += "};";
-
-        Debug.Log(output);
-    }
-
-
-    private int GenerateRandomVertices()
-    {
-        int[] vertices = new[] { 1, 2, 3, 4 };
-        float rand = Random.Range(0, 1f);
-        int finalValue = 0;
-        if (rand < chances[0])
-        {
-            finalValue = vertices[0];
-        }
-        else if (rand < chances[1])
-        {
-            finalValue = vertices[1];
-        }
-        else if (rand < chances[2])
-        {
-            finalValue = vertices[2];
-        }
-        else
-        {
-            finalValue = vertices[3];
-        }
-
-        return finalValue;
-    }
-
-    private int[,] GeneratePlanarGraphAdjacencyMatrix(int n)
-    {
-        int[,] matrix = new int[n, n];
-
-        int[] verticesInRows = new int[n];
-
-
-        // Генеруємо ребра
-
-        int maxIterations = n * 2;
-
-        do
-        {
-            // Ініціалізуємо матрицю суміжності нулями
-            for (int i = 0; i < n; i++)
-            {
-                for (int j = 0; j < n; j++)
-                {
-                    matrix[i, j] = 0;
-                }
-
-                verticesInRows[i] = GenerateRandomVertices();
-            }
-
-            if (CheckOnIterations())
-            {
-                Debug.Log("Out of iterations");
-                return null;
-            }
-
-            for (int i = 0; i < n; i++)
-            {
-                // Випадково обираємо кількість ребер для поточної вершини
-                int curEdgesCount = CheckCountInRow(matrix, i);
-                // Генеруємо випадкові вершини, з якими буде з'єднана поточна вершина
-                List<int> connectedVertices = new List<int>();
-                int curIteration = 0;
-                while (connectedVertices.Count < verticesInRows[i] - curEdgesCount)
-                {
-                    int vertex = Random.Range(0, n);
-                    if (vertex != i && !connectedVertices.Contains(vertex) &&
-                        (CheckCountInRow(matrix, vertex) < verticesInRows[vertex] || curIteration > maxIterations))
-                    {
-                        connectedVertices.Add(vertex);
-                    }
-
-                    curIteration++;
-                }
-
-                // Записуємо з'єднання у матрицю суміжності
-                foreach (int j in connectedVertices)
-                {
-                    matrix[i, j] = 1;
-                    matrix[j, i] = 1;
-                }
-            }
-        } while (!GraphChecks.IsReachable(matrix, 0));
-
-        Debug.Log(" reach =  " + GraphChecks.IsReachable(matrix, 0));
-        PrintMatrix(matrix);
-        if (!cyclesAllowed)
-        {
-            matrix = GraphChecks.RemoveCycles(matrix);
-        }
-
-        return matrix;
-    }
-
-    private int CheckCountInRow(int[,] matrix, int row)
-    {
-        int count = 0;
-        for (int col = 0; col < matrix.GetLength(1); col++)
-        {
-            if (matrix[row, col] == 1)
-            {
-                count++;
-            }
-        }
-
-        return count;
-    }
-
 
     public void ClearAll()
     {
