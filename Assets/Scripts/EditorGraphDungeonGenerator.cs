@@ -6,7 +6,7 @@ using UnityEngine;
 
 [CustomEditor(typeof(GraphDungeonGenerator))]
 [CanEditMultipleObjects]
-public class GraphDungeonGeneratorEditor : Editor
+public class EditorGraphDungeonGenerator : Editor
 {
     private SerializedProperty roomSize;
     private SerializedProperty randomSeed;
@@ -20,8 +20,7 @@ public class GraphDungeonGeneratorEditor : Editor
     private SerializedProperty randomAngles;
     private SerializedProperty rightAngle;
     private SerializedProperty camera;
-    private SerializedProperty dungeonTextureColor;
-    private SerializedProperty backgroundTextureColor;
+
 
     private void OnEnable()
     {
@@ -37,8 +36,7 @@ public class GraphDungeonGeneratorEditor : Editor
         randomAngles = serializedObject.FindProperty("randomAngles");
         rightAngle = serializedObject.FindProperty("rightAngle");
         camera = serializedObject.FindProperty("camera");
-        dungeonTextureColor = serializedObject.FindProperty("dungeonTextureColor");
-        backgroundTextureColor = serializedObject.FindProperty("backgroundTextureColor");
+
     }
 
     public override void OnInspectorGUI()
@@ -157,19 +155,7 @@ public class GraphDungeonGeneratorEditor : Editor
                 generator.GenerateDungeon();
             }
         }
-        EditorGUILayout.PropertyField(dungeonTextureColor);
-        EditorGUILayout.PropertyField(backgroundTextureColor);
-
-        if (checkMatrix)
-        {
-            if (GUILayout.Button("Save Texture"))
-            {
-                generator.SaveTexture();
-            }
-
-         
-        }
-
+        
         if (GUILayout.Button("Clear"))
         {
             generator.ClearAll();

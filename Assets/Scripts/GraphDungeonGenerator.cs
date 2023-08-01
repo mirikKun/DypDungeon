@@ -7,32 +7,31 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using Random = UnityEngine.Random;
 
+[RequireComponent(typeof(DungeonPlacer))]
 [ExecuteInEditMode]
 public class GraphDungeonGenerator : MonoBehaviour
 {
-    [SerializeField] private int roomSize = 10;
-    [SerializeField] private int randomSeed = 10;
-    public int roomCount = 13;
-    [SerializeField] private float[] chances = { 0.45f, 0.84f, 1f, 1 };
+    [SerializeField] protected int roomSize = 10;
+    [SerializeField] protected int randomSeed = 10;
+    [SerializeField] protected int roomCount = 13;
+    [SerializeField] protected float[] chances = { 0.45f, 0.84f, 1f, 1 };
 
-    [SerializeField] private int corridorLenght = 10;
-    [SerializeField] private float corridorWidth = 1;
+    [SerializeField] protected int corridorLenght = 10;
+    [SerializeField] protected float corridorWidth = 1;
 
-    private int minRoomDistance = 18;
-    [SerializeField] private bool cyclesAllowed = true;
-    [SerializeField] private bool randomAngles = true;
-    [SerializeField] private bool rightAngle = true;
+    [SerializeField] protected bool cyclesAllowed = true;
+    [SerializeField] protected bool randomAngles = true;
+    [SerializeField] protected bool rightAngle = true;
 
-    [SerializeField] private int corridorLenghtRange = 5;
-    [SerializeField] private int roomSizeRange = 5;
-    [SerializeField] private Transform camera;
-    [SerializeField] private Color dungeonTextureColor = Color.black;
-    [SerializeField] private Color backgroundTextureColor = Color.white;
+    [SerializeField] protected int corridorLenghtRange = 5;
+    [SerializeField] protected int roomSizeRange = 5;
+    [SerializeField] protected Transform camera;
+    
+    private int iterations;
+    protected int minRoomDistance = 18;
+
     private DungeonPlacer dungeonPlacer;
     private GraphRoom[] rooms;
-
-    private int iterations;
-
     private List<Chain> decomposedChains = new List<Chain>();
     private GraphRoom[] corridorSpaces;
     private List<GraphRoom> corridors;
@@ -89,41 +88,6 @@ public class GraphDungeonGenerator : MonoBehaviour
         //FindObjectOfType<TextureSetter>().SetTexturesByRooms(rooms, corridors.ToArray(),dungeonTextureColor,backgroundTextureColor);
     }
 
-    public void SaveTexture()
-    {
-        TextureSetter.SavePng(rooms, corridors.ToArray(), dungeonTextureColor, backgroundTextureColor);
-    }
-
-    public bool CheckMatrix()
-    {
-        //check if matrix with right size
-        if (roomCount != graph.GetLength(0))
-        {
-            return true;
-        }
-
-        FillMatrixBottom();
-        //check if all rooms are reachable
-
-        if (!GraphChecks.IsReachable(graph, 0))
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    private void FillMatrixBottom()
-    {
-        for (int y = 0; y < roomCount - 1; y++)
-        {
-            for (int x = y + 1; x < roomCount; x++)
-            {
-                graph[x, y] = graph[y, x];
-            }
-        }
-    }
-
     private void ResetVariables()
     {
         decomposedChains = new List<Chain>();
@@ -172,6 +136,10 @@ public class GraphDungeonGenerator : MonoBehaviour
         return roomSize + Random.Range(0, roomSizeRange);
     }
 
+    public bool CheckMatrix()
+    {
+        return GraphChecks.CheckMatrix(roomCount, graph);
+    }
     private bool GenerateByChain(GraphRoom previousRoom, Chain chain, int roomOrder, int chainIndex)
     {
         if (CheckOnIterations())

@@ -5,6 +5,23 @@ using UnityEngine;
 public class GraphChecks
 {
     static int lastVisitedNode, lastParentNode;
+    
+    public static bool CheckMatrix(int roomCount,int[,] matrix)
+    {
+        //check if matrix with right size
+        if (roomCount != matrix.GetLength(0))
+        {
+            return true;
+        }
+        //check if all rooms are reachable
+
+        if (!GraphChecks.IsReachable(matrix, 0))
+        {
+            return false;
+        }
+
+        return true;
+    }
     public static bool IsReachable(int[,] matrix, int startVertex)
     {
         int n = matrix.GetLength(0);

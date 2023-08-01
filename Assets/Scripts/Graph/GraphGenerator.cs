@@ -151,6 +151,7 @@ public class GraphGenerator
 
         return count;
     }
+
     private bool CheckOnIterations()
     {
         iterations++;
