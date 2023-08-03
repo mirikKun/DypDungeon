@@ -25,24 +25,24 @@ public class TextureSetter : MonoBehaviour
             maxTop = Int32.MinValue;
         foreach (var room in rooms)
         {
-            if (room.left < minLeft)
+            if (room.Left < minLeft)
             {
-                minLeft = room.left;
+                minLeft = room.Left;
             }
 
-            if (room.right > maxRight)
+            if (room.Right > maxRight)
             {
-                maxRight = room.right;
+                maxRight = room.Right;
             }
 
-            if (room.bottom < minBottom)
+            if (room.Bottom < minBottom)
             {
-                minBottom = room.bottom;
+                minBottom = room.Bottom;
             }
 
-            if (room.top > maxTop)
+            if (room.Top > maxTop)
             {
-                maxTop = room.top;
+                maxTop = room.Top;
             }
         }
 
@@ -80,19 +80,19 @@ public class TextureSetter : MonoBehaviour
         
         foreach (var room in rooms)
         {
-            float texLeft = (float)(room.left - minLeft) / (roomsMaxSize) * size+horizontalOffset;
-            float texRight = (float)(room.right - minLeft) / (roomsMaxSize) * size+horizontalOffset;
-            float texBottom = (float)(room.bottom - minBottom) / (roomsMaxSize) * size+verticalOffset;
-            float texTop = (float)(room.top - minBottom) / (roomsMaxSize) * size+verticalOffset;
+            float texLeft = (float)(room.Left - minLeft) / (roomsMaxSize) * size+horizontalOffset;
+            float texRight = (float)(room.Right - minLeft) / (roomsMaxSize) * size+horizontalOffset;
+            float texBottom = (float)(room.Bottom - minBottom) / (roomsMaxSize) * size+verticalOffset;
+            float texTop = (float)(room.Top - minBottom) / (roomsMaxSize) * size+verticalOffset;
             
             cornersSets.Add(PolygonChecker.GetSquareCorners(texLeft, texRight, texBottom, texTop, 0));
         }        
         foreach (var room in corridors)
         {
-            float texLeft = (float)(room.left - minLeft) / (roomsMaxSize) * size+horizontalOffset;
-            float texRight = (float)(room.right - minLeft) / (roomsMaxSize) * size+horizontalOffset;
-            float texBottom = (float)(room.bottom - minBottom) / (roomsMaxSize) * size+verticalOffset;
-            float texTop = (float)(room.top - minBottom) / (roomsMaxSize) * size+verticalOffset;
+            float texLeft = (float)(room.Left - minLeft) / (roomsMaxSize) * size+horizontalOffset;
+            float texRight = (float)(room.Right - minLeft) / (roomsMaxSize) * size+horizontalOffset;
+            float texBottom = (float)(room.Bottom - minBottom) / (roomsMaxSize) * size+verticalOffset;
+            float texTop = (float)(room.Top - minBottom) / (roomsMaxSize) * size+verticalOffset;
             
             cornersSets.Add(PolygonChecker.GetSquareCorners(texLeft, texRight, texBottom, texTop, 90-room.angle));
         }

@@ -18,7 +18,7 @@ public class GraphGenerator
     }
 
 
-    private void PrintSyntaxMatrix(int[,] matrix)
+    public static void PrintSyntaxMatrix(int[,] matrix)
     {
         string output = "{\n";
         for (int i = 0; i < matrix.GetLength(0); i++)

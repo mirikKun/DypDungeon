@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
-[CustomEditor(typeof(GraphDungeonGenerator))]
+[CustomEditor(typeof(GraphDungeonGenerator),true)]
 [CanEditMultipleObjects]
 public class EditorGraphDungeonGenerator : Editor
 {
@@ -19,7 +19,6 @@ public class EditorGraphDungeonGenerator : Editor
     private SerializedProperty roomSizeRange;
     private SerializedProperty randomAngles;
     private SerializedProperty rightAngle;
-    private SerializedProperty camera;
 
 
     private void OnEnable()
@@ -35,7 +34,6 @@ public class EditorGraphDungeonGenerator : Editor
         roomSizeRange = serializedObject.FindProperty("roomSizeRange");
         randomAngles = serializedObject.FindProperty("randomAngles");
         rightAngle = serializedObject.FindProperty("rightAngle");
-        camera = serializedObject.FindProperty("camera");
 
     }
 
@@ -147,7 +145,6 @@ public class EditorGraphDungeonGenerator : Editor
         EditorGUILayout.PropertyField(roomSizeRange);
         EditorGUILayout.PropertyField(randomAngles);
         EditorGUILayout.PropertyField(rightAngle);
-        EditorGUILayout.PropertyField(camera);
         if (checkMatrix)
         {
             if (GUILayout.Button("Build Object"))

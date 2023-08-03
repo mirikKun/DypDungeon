@@ -25,16 +25,16 @@ public class DungeonGenerator : MonoBehaviour
     public int maxRoomWidth = 5;
 
     public int enterLenght = 35;
-    public Queue<Room> roomsToSplit = new Queue<Room>();
+    public Queue<BinaryRoom> roomsToSplit = new Queue<BinaryRoom>();
     public List<DungeonSegment> finalRoomObjects = new List<DungeonSegment>();
-    public List<Room> finalRooms = new List<Room>();
+    public List<BinaryRoom> finalRooms = new List<BinaryRoom>();
     public DungeonSegment enterSegment;
     private float placeMuptiplayer = 0.5f;
-    private DungeonPlacer dungeonPlacer;
+    private SimpleDungeonPlacer dungeonPlacer;
 
     private void Start()
     {
-        dungeonPlacer = GetComponent<DungeonPlacer>();
+        dungeonPlacer = GetComponent<SimpleDungeonPlacer>();
         Generate();
     }
 
@@ -59,7 +59,7 @@ public class DungeonGenerator : MonoBehaviour
 
         Random.InitState(seed);
 
-        Room firstRoom = new Room(0, width, 0, height);
+        BinaryRoom firstRoom = new BinaryRoom(0, width, 0, height);
         roomsToSplit.Enqueue(firstRoom);
         curIteration = 0;
         GenerateRooms();
@@ -88,10 +88,10 @@ public class DungeonGenerator : MonoBehaviour
 
     private void GenerateEnter()
     {
-        Room[] outerRooms = GetAllOuterRooms();
+        BinaryRoom[] outerRooms = GetAllOuterRooms();
 
 
-        Room enterRoom = outerRooms[Random.Range(0, outerRooms.Length - 1)];
+        BinaryRoom enterRoom = outerRooms[Random.Range(0, outerRooms.Length - 1)];
         bool horizontal = enterRoom.leftBorder || enterRoom.rightBorder;
 
         float zPos;
@@ -103,49 +103,49 @@ public class DungeonGenerator : MonoBehaviour
 
         if (horizontal)
         {
-            zPos = enterRoom.bottom + (enterRoom.top - enterRoom.bottom) / 2;
+            zPos = enterRoom.Bottom + (enterRoom.Top - enterRoom.Bottom) / 2;
             if (enterRoom.rightBorder)
             {
-                xPos = enterRoom.right + lenght / 2;
+                xPos = enterRoom.Right + lenght / 2;
             }
             else
             {
-                xPos = enterRoom.left - lenght / 2;
+                xPos = enterRoom.Left - lenght / 2;
             }
 
             corridorScale = new Vector3(lenght, 10, corridorWidth);
             if (!enterRoom.rightBorder)
             {
-                PlaceEnter(new Vector3(enterRoom.left - lenght + 4, 0, zPos) + transform.position - dungeonOffset,
+                PlaceEnter(new Vector3(enterRoom.Left - lenght + 4, 0, zPos) + transform.position - dungeonOffset,
                     true);
             }
             else
             {
-                PlaceEnter(new Vector3(enterRoom.right + lenght - 4, 0, zPos) + transform.position - dungeonOffset,
+                PlaceEnter(new Vector3(enterRoom.Right + lenght - 4, 0, zPos) + transform.position - dungeonOffset,
                     true);
             }
         }
         else
         {
-            xPos = enterRoom.left + (enterRoom.right - enterRoom.left) / 2;
+            xPos = enterRoom.Left + (enterRoom.Right - enterRoom.Left) / 2;
             if (enterRoom.topBorder)
             {
-                zPos = enterRoom.top + lenght / 2;
+                zPos = enterRoom.Top + lenght / 2;
             }
             else
             {
-                zPos = enterRoom.bottom - lenght / 2;
+                zPos = enterRoom.Bottom - lenght / 2;
             }
 
             corridorScale = new Vector3(corridorWidth, 10, lenght);
             if (!enterRoom.topBorder)
             {
-                PlaceEnter(new Vector3(xPos, 0, enterRoom.bottom - lenght + 4) + transform.position - dungeonOffset,
+                PlaceEnter(new Vector3(xPos, 0, enterRoom.Bottom - lenght + 4) + transform.position - dungeonOffset,
                     false);
             }
             else
             {
-                PlaceEnter(new Vector3(xPos, 0, enterRoom.top + lenght - 4) + transform.position - dungeonOffset,
+                PlaceEnter(new Vector3(xPos, 0, enterRoom.Top + lenght - 4) + transform.position - dungeonOffset,
                     false);
             }
         }
@@ -162,9 +162,9 @@ public class DungeonGenerator : MonoBehaviour
     }
 
 
-    private Room[] GetAllOuterRooms()
+    private BinaryRoom[] GetAllOuterRooms()
     {
-        List<Room> outerRooms = new List<Room>();
+        List<BinaryRoom> outerRooms = new List<BinaryRoom>();
         for (int i = 0; i < finalRooms.Count; i++)
 
         {
@@ -174,23 +174,23 @@ public class DungeonGenerator : MonoBehaviour
             bool top = true;
             for (int j = 0; j < finalRooms.Count; j++)
             {
-                if (finalRooms[i].right < finalRooms[j].left)
+                if (finalRooms[i].Right < finalRooms[j].Left)
                 {
                     right = false;
                     ;
                 }
 
-                if (finalRooms[i].left > finalRooms[j].right)
+                if (finalRooms[i].Left > finalRooms[j].Right)
                 {
                     left = false;
                 }
 
-                if (finalRooms[i].bottom > finalRooms[j].top)
+                if (finalRooms[i].Bottom > finalRooms[j].Top)
                 {
                     bottom = false;
                 }
 
-                if (finalRooms[i].top < finalRooms[j].bottom)
+                if (finalRooms[i].Top < finalRooms[j].Bottom)
                 {
                     top = false;
                 }
@@ -235,7 +235,7 @@ public class DungeonGenerator : MonoBehaviour
         List<Vertex> vertices = new List<Vertex>();
         foreach (var room in finalRooms)
         {
-            vertices.Add(new Vertex<Room>(room.GetPosition(), room));
+            vertices.Add(new Vertex<BinaryRoom>(room.GetPosition(), room));
         }
 
         Delaunay2D delaunay;
@@ -306,8 +306,8 @@ public class DungeonGenerator : MonoBehaviour
     {
         foreach (var edge in edges)
         {
-            Room room1 = GetRoomByPosition(edge.U.Position);
-            Room room2 = GetRoomByPosition(edge.V.Position);
+            BinaryRoom room1 = GetRoomByPosition(edge.U.Position);
+            BinaryRoom room2 = GetRoomByPosition(edge.V.Position);
 
             if (RoomAreDiagonal(room1, room2))
             {
@@ -320,7 +320,7 @@ public class DungeonGenerator : MonoBehaviour
         }
     }
 
-    private Room GetRoomByPosition(Vector2 position)
+    private BinaryRoom GetRoomByPosition(Vector2 position)
     {
         foreach (var room in finalRooms)
         {
@@ -331,10 +331,10 @@ public class DungeonGenerator : MonoBehaviour
         }
 
         Debug.Log("Room not found at :" + position);
-        return new Room(0, 1, 0, 1);
+        return new BinaryRoom(0, 1, 0, 1);
     }
 
-    private void GenerateCorridorsBinary(Room upperRoom)
+    private void GenerateCorridorsBinary(BinaryRoom upperRoom)
     {
         if (upperRoom.dawnTreeRooms != null)
         {
@@ -344,13 +344,13 @@ public class DungeonGenerator : MonoBehaviour
         }
     }
 
-    private void GetNearestRoom(Room firstRoom, Room secondRoom)
+    private void GetNearestRoom(BinaryRoom firstRoom, BinaryRoom secondRoom)
     {
-        Room[] firstNestedRooms = GetAllNestedRooms(firstRoom);
-        Room[] secondNestedRooms = GetAllNestedRooms(secondRoom);
+        BinaryRoom[] firstNestedRooms = GetAllNestedRooms(firstRoom);
+        BinaryRoom[] secondNestedRooms = GetAllNestedRooms(secondRoom);
 
-        Room firstNearestRoom = firstRoom;
-        Room secondNearestRoom = secondRoom;
+        BinaryRoom firstNearestRoom = firstRoom;
+        BinaryRoom secondNearestRoom = secondRoom;
         float distance = Single.MaxValue;
         foreach (var firstNestedRoom in firstNestedRooms)
         {
@@ -368,12 +368,12 @@ public class DungeonGenerator : MonoBehaviour
         AddSimpleCorridor(firstNearestRoom, secondNearestRoom);
     }
 
-    private Room[] GetAllNestedRooms(Room room)
+    private BinaryRoom[] GetAllNestedRooms(BinaryRoom room)
     {
         if (room.dawnTreeRooms != null)
         {
-            Room[] firstNestedRooms = GetAllNestedRooms(room.dawnTreeRooms[0]);
-            Room[] secondNestedRooms = GetAllNestedRooms(room.dawnTreeRooms[1]);
+            BinaryRoom[] firstNestedRooms = GetAllNestedRooms(room.dawnTreeRooms[0]);
+            BinaryRoom[] secondNestedRooms = GetAllNestedRooms(room.dawnTreeRooms[1]);
             return firstNestedRooms.Concat(secondNestedRooms).ToArray();
         }
         else
@@ -382,16 +382,16 @@ public class DungeonGenerator : MonoBehaviour
         }
     }
 
-    private RoomOrientation CheckOnCorridor(Room firstRoom, Room secondRoom)
+    private RoomOrientation CheckOnCorridor(BinaryRoom firstRoom, BinaryRoom secondRoom)
     {
         RoomOrientation orientation;
-        if ((firstRoom.left > secondRoom.right || firstRoom.right < secondRoom.left) &&
-            GetLenghtOfCovering(firstRoom.bottom, firstRoom.top, secondRoom.bottom, secondRoom.top) > corridorWidth)
+        if ((firstRoom.Left > secondRoom.Right || firstRoom.Right < secondRoom.Left) &&
+            GetLenghtOfCovering(firstRoom.Bottom, firstRoom.Top, secondRoom.Bottom, secondRoom.Top) > corridorWidth)
         {
             orientation = RoomOrientation.Horizontal;
         }
-        else if ((firstRoom.bottom > secondRoom.top || firstRoom.top < secondRoom.bottom) &&
-                 GetLenghtOfCovering(firstRoom.left, firstRoom.right, secondRoom.left, secondRoom.right) >
+        else if ((firstRoom.Bottom > secondRoom.Top || firstRoom.Top < secondRoom.Bottom) &&
+                 GetLenghtOfCovering(firstRoom.Left, firstRoom.Right, secondRoom.Left, secondRoom.Right) >
                  corridorWidth)
         {
             orientation = RoomOrientation.Vertical;
@@ -449,7 +449,7 @@ public class DungeonGenerator : MonoBehaviour
     }
 
 
-    private void AddDiagonalCorridor(Room firstRoom, Room secondRoom)
+    private void AddDiagonalCorridor(BinaryRoom firstRoom, BinaryRoom secondRoom)
     {
         // Координати центрів квадратів
         Vector2 firstCenter = firstRoom.GetPosition();
@@ -467,34 +467,34 @@ public class DungeonGenerator : MonoBehaviour
 
 
         // Визначаємо ширину та довжину прямокутника
-        float corridorLength = distance - firstRoom.GetHeight() / 4f - firstRoom.GetWidth() / 4f
-                               - secondRoom.GetHeight() / 4f - secondRoom.GetWidth() / 4f;
+        float corridorLength = distance - firstRoom.GetHeight / 4f - firstRoom.GetWidth / 4f
+                               - secondRoom.GetHeight / 4f - secondRoom.GetWidth / 4f;
 
         float firstX;
         float secondX;
 
         float firstY;
         float secondY;
-        if (firstRoom.right < secondRoom.left)
+        if (firstRoom.Right < secondRoom.Left)
         {
-            firstX = firstRoom.right;
-            secondX = secondRoom.left;
+            firstX = firstRoom.Right;
+            secondX = secondRoom.Left;
         }
         else
         {
-            firstX = firstRoom.left;
-            secondX = secondRoom.right;
+            firstX = firstRoom.Left;
+            secondX = secondRoom.Right;
         }
 
-        if (firstRoom.top < secondRoom.bottom)
+        if (firstRoom.Top < secondRoom.Bottom)
         {
-            firstY = firstRoom.top;
-            secondY = secondRoom.bottom;
+            firstY = firstRoom.Top;
+            secondY = secondRoom.Bottom;
         }
         else
         {
-            firstY = firstRoom.bottom;
-            secondY = secondRoom.top;
+            firstY = firstRoom.Bottom;
+            secondY = secondRoom.Top;
         }
 
         float cornerDistance = Vector2.Distance(Vector2.zero, new Vector2(firstX - secondX, firstY - secondY));
@@ -548,9 +548,9 @@ public class DungeonGenerator : MonoBehaviour
         finalRoomObjects.Add(corridor);
     }
 
-    private void AddSimpleCorridor(Room firstRoom, Room secondRoom)
+    private void AddSimpleCorridor(BinaryRoom firstRoom, BinaryRoom secondRoom)
     {
-        bool horizontal = firstRoom.left > secondRoom.right || firstRoom.right < secondRoom.left;
+        bool horizontal = firstRoom.Left > secondRoom.Right || firstRoom.Right < secondRoom.Left;
 
         float zPos;
         float lenght;
@@ -560,16 +560,16 @@ public class DungeonGenerator : MonoBehaviour
         {
             // zPos = (firstRoom.bottom + secondRoom.bottom) / 2f +
             //        ((firstRoom.top + secondRoom.top) / 2f - (firstRoom.bottom + secondRoom.bottom) / 2f) / 2;
-            zPos = GetCenterOfCovering(firstRoom.bottom, firstRoom.top, secondRoom.bottom, secondRoom.top);
-            if (firstRoom.left > secondRoom.right)
+            zPos = GetCenterOfCovering(firstRoom.Bottom, firstRoom.Top, secondRoom.Bottom, secondRoom.Top);
+            if (firstRoom.Left > secondRoom.Right)
             {
-                lenght = firstRoom.left - secondRoom.right;
-                xPos = secondRoom.right + lenght / 2;
+                lenght = firstRoom.Left - secondRoom.Right;
+                xPos = secondRoom.Right + lenght / 2;
             }
             else
             {
-                lenght = secondRoom.left - firstRoom.right;
-                xPos = firstRoom.right + lenght / 2;
+                lenght = secondRoom.Left - firstRoom.Right;
+                xPos = firstRoom.Right + lenght / 2;
             }
 
             corridorScale = new Vector3(lenght, 10, corridorWidth);
@@ -578,16 +578,16 @@ public class DungeonGenerator : MonoBehaviour
         {
             // xPos = (firstRoom.left + secondRoom.left) / 2f +
             //        ((firstRoom.right + secondRoom.right) / 2f - (firstRoom.left + secondRoom.left) / 2f) / 2;
-            xPos = GetCenterOfCovering(firstRoom.left, firstRoom.right, secondRoom.left, secondRoom.right);
-            if (firstRoom.bottom > secondRoom.top)
+            xPos = GetCenterOfCovering(firstRoom.Left, firstRoom.Right, secondRoom.Left, secondRoom.Right);
+            if (firstRoom.Bottom > secondRoom.Top)
             {
-                lenght = firstRoom.bottom - secondRoom.top;
-                zPos = secondRoom.top + lenght / 2;
+                lenght = firstRoom.Bottom - secondRoom.Top;
+                zPos = secondRoom.Top + lenght / 2;
             }
             else
             {
-                lenght = secondRoom.bottom - firstRoom.top;
-                zPos = firstRoom.top + lenght / 2;
+                lenght = secondRoom.Bottom - firstRoom.Top;
+                zPos = firstRoom.Top + lenght / 2;
             }
 
             corridorScale = new Vector3(corridorWidth, 10, lenght);
@@ -597,13 +597,13 @@ public class DungeonGenerator : MonoBehaviour
     }
 
 
-    private bool RoomAreDiagonal(Room room1, Room room2)
+    private bool RoomAreDiagonal(BinaryRoom room1, BinaryRoom room2)
     {
-        bool rightTop = room1.right < room2.left + corridorWidth && room1.top < room2.bottom + corridorWidth;
-        bool rightBottom = room1.right < room2.left + corridorWidth && room1.bottom > room2.top - corridorWidth;
+        bool rightTop = room1.Right < room2.Left + corridorWidth && room1.Top < room2.Bottom + corridorWidth;
+        bool rightBottom = room1.Right < room2.Left + corridorWidth && room1.Bottom > room2.Top - corridorWidth;
 
-        bool leftTop = room1.left > room2.right - corridorWidth && room1.top < room2.bottom + corridorWidth;
-        bool leftBottom = room1.left > room2.right - corridorWidth && room1.bottom > room2.top - corridorWidth;
+        bool leftTop = room1.Left > room2.Right - corridorWidth && room1.Top < room2.Bottom + corridorWidth;
+        bool leftBottom = room1.Left > room2.Right - corridorWidth && room1.Bottom > room2.Top - corridorWidth;
 
         return rightTop || rightBottom || leftTop || leftBottom;
     }
@@ -612,10 +612,7 @@ public class DungeonGenerator : MonoBehaviour
     {
         foreach (var finalRoom in finalRooms)
         {
-            finalRoom.left += trimSize;
-            finalRoom.right -= trimSize;
-            finalRoom.bottom += trimSize;
-            finalRoom.top -= trimSize;
+            finalRoom.ChangeSize(trimSize, -trimSize, trimSize, -trimSize);
         }
     }
 
@@ -623,13 +620,10 @@ public class DungeonGenerator : MonoBehaviour
     {
         foreach (var finalRoom in finalRooms)
         {
-            int widthMasDecreasing = (int)(finalRoom.GetWidth() * maxRoomDecreasing);
-            int heightMasDecreasing = (int)(finalRoom.GetHeight() * maxRoomDecreasing);
-
-            finalRoom.left += Random.Range(0, widthMasDecreasing);
-            finalRoom.right -= Random.Range(0, widthMasDecreasing);
-            finalRoom.bottom += Random.Range(0, heightMasDecreasing);
-            finalRoom.top -= Random.Range(0, heightMasDecreasing);
+            int widthMasDecreasing = (int)(finalRoom.GetWidth * maxRoomDecreasing);
+            int heightMasDecreasing = (int)(finalRoom.GetHeight * maxRoomDecreasing);
+            finalRoom.ChangeSize(Random.Range(0, widthMasDecreasing), -Random.Range(0, widthMasDecreasing),
+                Random.Range(0, heightMasDecreasing), -Random.Range(0, heightMasDecreasing));
         }
     }
 
@@ -643,21 +637,19 @@ public class DungeonGenerator : MonoBehaviour
             return;
         }
 
-        Room upperTreeRoom = roomsToSplit.Dequeue();
-        Room[] newRooms = SplitRoom(upperTreeRoom);
+        BinaryRoom upperTreeRoom = roomsToSplit.Dequeue();
+        BinaryRoom[] newRooms = SplitRoom(upperTreeRoom);
         if (newRooms.Length == 2)
         {
             upperTreeRoom.dawnTreeRooms = newRooms;
 
             roomsToSplit.Enqueue(newRooms[0]);
-            newRooms[0].upperTreeRoom = upperTreeRoom;
-            newRooms[0].sideTreeRoom = newRooms[1];
+     
 
             GenerateRooms();
 
             roomsToSplit.Enqueue(newRooms[1]);
-            newRooms[1].upperTreeRoom = upperTreeRoom;
-            newRooms[1].sideTreeRoom = newRooms[0];
+          
 
 
             GenerateRooms();
@@ -687,33 +679,33 @@ public class DungeonGenerator : MonoBehaviour
         finalRoomObjects.Add(corridor);
     }
 
-    private DungeonSegment PlaceRoom(Room r)
+    private DungeonSegment PlaceRoom(BinaryRoom r)
     {
         Vector3 dungeonOffset = new Vector3(width * placeMuptiplayer, 0, height * placeMuptiplayer);
         DungeonSegment room = dungeonPlacer.PlaceRoom(r, dungeonOffset);
         return room;
     }
 
-    public Room[] SplitRoom(Room room)
+    public BinaryRoom[] SplitRoom(BinaryRoom room)
     {
         int minHeightSplit = minRoomHeight + trimSize;
         int minWidthSplit = minRoomWidth + trimSize;
-        if (room.GetHeight() >= room.GetWidth() && room.GetHeight() > minHeightSplit * 2 &&
-            room.GetHeight() > maxRoomHeight)
+        if (room.GetHeight >= room.GetWidth && room.GetHeight > minHeightSplit * 2 &&
+            room.GetHeight > maxRoomHeight)
         {
-            int splitHeight = Random.Range(minHeightSplit, room.GetHeight() - minHeightSplit);
+            int splitHeight = Random.Range(minHeightSplit, room.GetHeight - minHeightSplit);
 
-            Room firstRoom = new Room(room.left, room.right, room.bottom, room.bottom + splitHeight);
-            Room secondRoom = new Room(room.left, room.right, room.bottom + splitHeight, room.top);
+            BinaryRoom firstRoom = new BinaryRoom(room.Left, room.Right, room.Bottom, room.Bottom + splitHeight);
+            BinaryRoom secondRoom = new BinaryRoom(room.Left, room.Right, room.Bottom + splitHeight, room.Top);
             return new[] { firstRoom, secondRoom };
         }
-        else if (room.GetHeight() <= room.GetWidth() && room.GetWidth() > minWidthSplit * 2 &&
-                 room.GetWidth() > maxRoomWidth)
+        else if (room.GetHeight <= room.GetWidth && room.GetWidth > minWidthSplit * 2 &&
+                 room.GetWidth > maxRoomWidth)
         {
-            int splitWidth = Random.Range(minWidthSplit, room.GetWidth() - minWidthSplit);
+            int splitWidth = Random.Range(minWidthSplit, room.GetWidth - minWidthSplit);
 
-            Room firstRoom = new Room(room.left, room.left + splitWidth, room.bottom, room.top);
-            Room secondRoom = new Room(room.left + splitWidth, room.right, room.bottom, room.top);
+            BinaryRoom firstRoom = new BinaryRoom(room.Left, room.Left + splitWidth, room.Bottom, room.Top);
+            BinaryRoom secondRoom = new BinaryRoom(room.Left + splitWidth, room.Right, room.Bottom, room.Top);
             return new[] { firstRoom, secondRoom };
         }
         else
