@@ -35,11 +35,11 @@ public class Room
     
     public static bool RoomAreDiagonal(Room room1, Room room2,int offset)
     {
-        bool rightTop = room1.Right < room2.Left + offset && room1.Top < room2.Bottom + offset;
-        bool rightBottom = room1.Right < room2.Left + offset && room1.Bottom > room2.Top - offset;
+        bool rightTop = room1.Right <= room2.Left + offset && room1.Top <= room2.Bottom + offset;
+        bool rightBottom = room1.Right <= room2.Left + offset && room1.Bottom >= room2.Top - offset;
 
-        bool leftTop = room1.Left > room2.Right - offset && room1.Top < room2.Bottom + offset;
-        bool leftBottom = room1.Left > room2.Right - offset && room1.Bottom > room2.Top - offset;
+        bool leftTop = room1.Left >= room2.Right - offset && room1.Top <= room2.Bottom + offset;
+        bool leftBottom = room1.Left >= room2.Right - offset && room1.Bottom >= room2.Top - offset;
 
         return rightTop || rightBottom || leftTop || leftBottom;
     }

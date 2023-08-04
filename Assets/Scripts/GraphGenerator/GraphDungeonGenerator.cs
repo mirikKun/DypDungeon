@@ -68,6 +68,7 @@ public class GraphDungeonGenerator : MonoBehaviour
         dungeonPlacer.RemoveEverything();
         var graphHelper = new GraphChainDecomposer(roomCount, graph);
         decomposedChains = graphHelper.GetChainsOfGraph();
+        GraphGenerator.PrintSyntaxMatrix(graph);
     }
 
     protected virtual void ResetVariables()

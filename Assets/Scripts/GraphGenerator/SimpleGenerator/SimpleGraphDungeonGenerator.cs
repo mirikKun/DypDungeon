@@ -7,7 +7,7 @@ public  class SimpleGraphDungeonGenerator:GraphDungeonGenerator
     private GraphRoom[] rooms;
     private GraphRoom[] corridorSpaces;
     private List<GraphRoom> corridors;
-    private SimpleDungeonPlacer dungeonPlacer;
+    private SimpleDungeonPlacer simpleDungeonPlacer;
     public override void GenerateDungeon()
     {
         base.GenerateDungeon();
@@ -29,7 +29,7 @@ public  class SimpleGraphDungeonGenerator:GraphDungeonGenerator
 
     private bool GenerateRooms()
     {
-        dungeonPlacer = GetComponent<SimpleDungeonPlacer>();
+        simpleDungeonPlacer = GetComponent<SimpleDungeonPlacer>();
         GraphRoom firstRoom = new GraphRoom(0, GetRoomSize(), 0, GetRoomSize());
 
         rooms = new GraphRoom[roomCount];
@@ -73,7 +73,7 @@ public  class SimpleGraphDungeonGenerator:GraphDungeonGenerator
         {
             if (rooms[i].placed)
             {
-                dungeonPlacer.PlaceRoom(rooms[i], Vector3.zero, i);
+                simpleDungeonPlacer.PlaceRoom(rooms[i], Vector3.zero, i);
                 for (int j = i + 1; j < roomCount; j++)
                 {
                     if (graph[i, j] == 1 && rooms[j].placed)
@@ -81,7 +81,7 @@ public  class SimpleGraphDungeonGenerator:GraphDungeonGenerator
                         GraphRoom newRoom = GenerateCorridor(rooms[i], rooms[j]);
                         corridors.Add(newRoom);
 
-                        dungeonPlacer.PlaceCorridor(newRoom,
+                        simpleDungeonPlacer.PlaceCorridor(newRoom,
                             Vector3.zero);
                     }
                 }

@@ -13,6 +13,14 @@ public class GraphChecks
         {
             return true;
         }
+
+        for (int i = 0; i < roomCount-1; i++)
+        {
+            for (int j =i+1; j < roomCount; j++)
+            {
+                matrix[j, i] = matrix[i, j];
+            }
+        }
         //check if all rooms are reachable
 
         if (!GraphChecks.IsReachable(matrix, 0))

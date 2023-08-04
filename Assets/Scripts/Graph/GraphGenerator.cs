@@ -40,16 +40,16 @@ public class GraphGenerator
     }
 
 
-    private int GenerateRandomVertices()
+    private int GenerateRandomVertices(int n)
     {
         int[] vertices = new[] { 1, 2, 3, 4 };
         float rand = Random.Range(0, 1f);
         int finalValue = 0;
-        if (rand < chances[0])
+        if (rand < chances[0]||n<3)
         {
             finalValue = vertices[0];
         }
-        else if (rand < chances[1])
+        else if (rand < chances[1]||n<4)
         {
             finalValue = vertices[1];
         }
@@ -73,6 +73,7 @@ public class GraphGenerator
     }
     private int[,] GeneratePlanarGraphAdjacencyMatrix(int n)
     {
+        iterations = 0;
         int[,] matrix = new int[n, n];
 
         int[] verticesInRows = new int[n];
@@ -84,6 +85,7 @@ public class GraphGenerator
 
         do
         {
+            
             // Ініціалізуємо матрицю суміжності нулями
             for (int i = 0; i < n; i++)
             {
@@ -92,14 +94,14 @@ public class GraphGenerator
                     matrix[i, j] = 0;
                 }
 
-                verticesInRows[i] = GenerateRandomVertices();
+                verticesInRows[i] = GenerateRandomVertices(n);
             }
-
             if (CheckOnIterations())
             {
                 Debug.Log("Out of iterations");
                 return null;
             }
+           
 
             for (int i = 0; i < n; i++)
             {
@@ -110,6 +112,7 @@ public class GraphGenerator
                 int curIteration = 0;
                 while (connectedVertices.Count < verticesInRows[i] - curEdgesCount)
                 {
+                    iterations++;
                     int vertex = Random.Range(0, n);
                     if (vertex != i && !connectedVertices.Contains(vertex) &&
                         (CheckCountInRow(matrix, vertex) < verticesInRows[vertex] || curIteration > maxIterations))
@@ -117,8 +120,11 @@ public class GraphGenerator
                         connectedVertices.Add(vertex);
                     }
 
-                    curIteration++;
-                }
+                    if (CheckOnIterations())
+                    {
+                        Debug.Log("Out of iterations");
+                        return null;
+                    }                }
 
                 // Записуємо з'єднання у матрицю суміжності
                 foreach (int j in connectedVertices)
@@ -155,7 +161,7 @@ public class GraphGenerator
     private bool CheckOnIterations()
     {
         iterations++;
-        if (iterations > 550)
+        if (iterations > 1450)
         {
             Debug.Log("Out of iterations");
             return true;
