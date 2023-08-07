@@ -14,13 +14,7 @@ public class SegmentGraphDungeonGenerator : GraphDungeonGenerator
     private SegmentRoom[] rooms;
     private SegmentDungeonPlacer segmentDungeonPlacer;
 
-    private enum SegmentType
-    {
-        None = 0,
-        Room = 1,
-        Door = -2,
-        Hallway = -1
-    }
+
 
     public override void GenerateDungeon()
     {
@@ -441,4 +435,12 @@ public class SegmentGraphDungeonGenerator : GraphDungeonGenerator
                 secondRoom.ID);
         return newHallWay;
     }
+}
+public enum SegmentType
+{
+    None = 0,
+    Room = 1,
+    Door = -2,
+    Hallway = -1,
+    Anything = -5
 }
