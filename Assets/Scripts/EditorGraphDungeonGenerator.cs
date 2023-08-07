@@ -11,7 +11,8 @@ public class EditorGraphDungeonGenerator : Editor
     private SerializedProperty roomSize;
     private SerializedProperty randomSeed;
     private SerializedProperty roomCount;
-    private SerializedProperty chances;
+    private SerializedProperty cyclicity;
+    private SerializedProperty deviation;
     private SerializedProperty corridorLenght;
     private SerializedProperty corridorWidth;
     private SerializedProperty cyclesAllowed;
@@ -26,7 +27,8 @@ public class EditorGraphDungeonGenerator : Editor
         roomSize = serializedObject.FindProperty("roomSize");
         randomSeed = serializedObject.FindProperty("randomSeed");
         roomCount = serializedObject.FindProperty("roomCount");
-        chances = serializedObject.FindProperty("chances");
+        cyclicity = serializedObject.FindProperty("cyclicity");
+        deviation = serializedObject.FindProperty("deviation");
         corridorLenght = serializedObject.FindProperty("corridorLenght");
         corridorWidth = serializedObject.FindProperty("corridorWidth");
         cyclesAllowed = serializedObject.FindProperty("cyclesAllowed");
@@ -45,7 +47,8 @@ public class EditorGraphDungeonGenerator : Editor
 
         EditorGUILayout.PropertyField(randomSeed);
         EditorGUILayout.PropertyField(roomCount);
-        EditorGUILayout.PropertyField(chances);
+        EditorGUILayout.PropertyField(cyclicity);
+        EditorGUILayout.PropertyField(deviation);
         EditorGUILayout.PropertyField(cyclesAllowed);
 
         if (GUILayout.Button("GenerateMatrix"))

@@ -14,7 +14,8 @@ public class GraphDungeonGenerator : MonoBehaviour
     [SerializeField] protected int roomSize = 10;
     [SerializeField] protected int randomSeed = 10;
     [SerializeField] protected int roomCount = 13;
-    [SerializeField] protected float[] chances = { 0.45f, 0.84f, 1f, 1 };
+    [SerializeField] private float cyclicity=0;
+    [SerializeField] private float deviation=0.3f;
 
     [SerializeField] protected int corridorLenght = 10;
     [SerializeField] protected int corridorWidth = 1;
@@ -51,7 +52,7 @@ public class GraphDungeonGenerator : MonoBehaviour
 
     public void GenerateMatrix()
     {
-        GraphGenerator graphGenerator = new GraphGenerator(chances, cyclesAllowed, randomSeed);
+        GraphGenerator graphGenerator = new GraphGenerator(cyclicity,deviation, randomSeed);
         graph = graphGenerator.GenerateGraph(roomCount);
     }
 
@@ -98,6 +99,7 @@ public class GraphDungeonGenerator : MonoBehaviour
 
         return false;
     }
+
     protected int GetCorridorLenght()
     {
         return corridorLenght + Random.Range(0, corridorLenghtRange);

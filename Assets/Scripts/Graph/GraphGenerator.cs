@@ -5,15 +5,15 @@ using Random = UnityEngine.Random;
 
 public class GraphGenerator
 {
-    private float[] chances;
-    private bool cyclesAllowed;
+    private float cyclicity;
+    private float deviation;
     private int iterations;
 
-    public GraphGenerator(float[] chances,bool cyclesAllowed,int seed)
+    public GraphGenerator(float cyclicity,float deviation,int seed)
     {
-        this.chances = chances;
-        this.cyclesAllowed = cyclesAllowed;
         Random.InitState(seed);
+        this.cyclicity = cyclicity;
+        this.deviation = deviation;
 
     }
 
@@ -39,123 +39,78 @@ public class GraphGenerator
         Debug.Log(output);
     }
 
-
-    private int GenerateRandomVertices(int n)
-    {
-        int[] vertices = new[] { 1, 2, 3, 4 };
-        float rand = Random.Range(0, 1f);
-        int finalValue = 0;
-        if (rand < chances[0]||n<3)
-        {
-            finalValue = vertices[0];
-        }
-        else if (rand < chances[1]||n<4)
-        {
-            finalValue = vertices[1];
-        }
-        else if (rand < chances[2])
-        {
-            finalValue = vertices[2];
-        }
-        else
-        {
-            finalValue = vertices[3];
-        }
-
-        return finalValue;
-    }
-
     public int[,] GenerateGraph(int roomCount)
     {
-        int[,] generatedMatrix = GeneratePlanarGraphAdjacencyMatrix(roomCount);
+        int[,] generatedMatrix = GenerateDiagonalMatrix(roomCount);
+        AddDeviation(generatedMatrix);
+        AddCyclicity(generatedMatrix);
         PrintSyntaxMatrix(generatedMatrix);
         return generatedMatrix;
     }
-    private int[,] GeneratePlanarGraphAdjacencyMatrix(int n)
+
+
+    private int[,] GenerateDiagonalMatrix(int size)
     {
-        iterations = 0;
-        int[,] matrix = new int[n, n];
-
-        int[] verticesInRows = new int[n];
-
-
-        // Генеруємо ребра
-
-        int maxIterations = n * 4;
-
-        do
+        int[,] matrix = new int[size, size];
+        for (int i = 0; i < size-1; i++)
         {
-            
-            // Ініціалізуємо матрицю суміжності нулями
-            for (int i = 0; i < n; i++)
-            {
-                for (int j = 0; j < n; j++)
-                {
-                    matrix[i, j] = 0;
-                }
-
-                verticesInRows[i] = GenerateRandomVertices(n);
-            }
-            if (CheckOnIterations())
-            {
-                Debug.Log("Out of iterations");
-                return null;
-            }
-           
-
-            for (int i = 0; i < n; i++)
-            {
-                // Випадково обираємо кількість ребер для поточної вершини
-                int curEdgesCount = CheckCountInRow(matrix, i);
-                // Генеруємо випадкові вершини, з якими буде з'єднана поточна вершина
-                List<int> connectedVertices = new List<int>();
-                int curIteration = 0;
-                while (connectedVertices.Count < verticesInRows[i] - curEdgesCount)
-                {
-                    iterations++;
-                    int vertex = Random.Range(0, n);
-                    if (vertex != i && !connectedVertices.Contains(vertex) &&
-                        (CheckCountInRow(matrix, vertex) < verticesInRows[vertex] || curIteration > maxIterations))
-                    {
-                        connectedVertices.Add(vertex);
-                    }
-
-                    if (CheckOnIterations())
-                    {
-                        Debug.Log("Out of iterations");
-                        return null;
-                    }                }
-
-                // Записуємо з'єднання у матрицю суміжності
-                foreach (int j in connectedVertices)
-                {
-                    matrix[i, j] = 1;
-                    matrix[j, i] = 1;
-                }
-            }
-        } while (!GraphChecks.IsReachable(matrix, 0));
-
-        Debug.Log(" reach =  " + GraphChecks.IsReachable(matrix, 0));
-        if (!cyclesAllowed)
-        {
-            matrix = GraphChecks.RemoveCycles(matrix);
+            matrix[i, i+1]=1;
+                matrix[i+1, i]=1;
         }
 
         return matrix;
     }
-    
-    private int CheckCountInRow(int[,] matrix, int row)
+
+    private void AddDeviation( int[,] matrix)
     {
-        int count = 0;
-        for (int col = 0; col < matrix.GetLength(1); col++)
+        int size=matrix.GetLength(0);
+        for (int i = 0; i < size-1; i++)
         {
-            if (matrix[row, col] == 1)
+            float chanceToDeviate = Random.Range(0, 1f);
+            if (chanceToDeviate < deviation)
             {
-                count++;
+                matrix[i, i+1]=0;
+                matrix[i+1, i]=0;
+                int randomRow = Random.Range(0, size);
+                if (matrix[i, randomRow] == 1||i==randomRow)
+                {
+                    matrix[i, i+1]=1;
+                    matrix[i+1, i]=1;
+                    i--;
+                }
+                else
+                {
+                    matrix[i, randomRow] = 1;
+                    matrix[randomRow, i] = 1;
+                    if (!GraphChecks.IsReachable(matrix, 0))
+                    {
+                        matrix[i, i+1]=1;
+                        matrix[i+1, i]=1;
+                        matrix[i, randomRow] = 0;
+                        matrix[randomRow, i] = 0;
+                        i--;
+
+                    }
+                }
             }
         }
-
-        return count;
+    }
+    private void AddCyclicity( int[,] matrix)
+    {
+        int size=matrix.GetLength(0);
+        for (int i = 0; i < size-1; i++)
+        {
+            float chanceToCycle = Random.Range(0, 1f);
+            if (chanceToCycle <cyclicity)
+            {
+                int randomRow = Random.Range(0, size);
+                if ( i != randomRow)
+                {
+                    matrix[i, randomRow] = 1;
+                    matrix[randomRow, i] = 1;
+                }
+            }
+        }
     }
 
     private bool CheckOnIterations()

@@ -62,6 +62,14 @@ public class SegmentGraphDungeonGenerator : GraphDungeonGenerator
         steps.Add(dungeonSegments.GetCopy());
 
         bool success = GenerateRoomsByChain(rooms[firstRoomIndex], decomposedChains[0], 1, 0);
+        foreach (var room in rooms)
+        {
+            foreach (var hallWay in room.HallWays)
+            {
+                FillGridDoors((int)SegmentType.Door, hallWay);
+
+            }
+        }
         GraphGenerator.PrintSyntaxMatrix(dungeonSegments);
         segmentDungeonPlacer.Place(dungeonSegments);
         //StartCoroutine(StepsPresent());
@@ -75,7 +83,7 @@ public class SegmentGraphDungeonGenerator : GraphDungeonGenerator
         foreach (var step in steps)
         {
             Debug.Log(2);
-
+            segmentDungeonPlacer.RemoveEverything();
             segmentDungeonPlacer.Place(step);
             yield return new WaitForSeconds(1f);
         }
@@ -88,10 +96,10 @@ public class SegmentGraphDungeonGenerator : GraphDungeonGenerator
         foreach (var hallWay in room.HallWays)
         {
             FillGridHallway((int)SegmentType.Hallway, hallWay);
-            FillGridRooms((int)SegmentType.Door, hallWay);
         }
     }
 
+    
     private void ClearRoom(SegmentRoom room)
     {
         if (!room.Placed)
@@ -156,7 +164,7 @@ public class SegmentGraphDungeonGenerator : GraphDungeonGenerator
         }
     }
 
-    private void FillGridRooms(int value, HallWay hallWay)
+    private void FillGridDoors(int value, HallWay hallWay)
     {
         if (hallWay.Corridors.Length < 2)
         {
