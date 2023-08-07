@@ -10,7 +10,7 @@ public class SegmentGraphDungeonGenerator : GraphDungeonGenerator
     private int[,] dungeonSegments;
     private List<int[,]> steps = new List<int[,]>();
 
-    private Vector2Int size = new(20, 20);
+    private Vector2Int size = new Vector2Int(60, 60);
     private SegmentRoom[] rooms;
     private SegmentDungeonPlacer segmentDungeonPlacer;
 
@@ -39,8 +39,10 @@ public class SegmentGraphDungeonGenerator : GraphDungeonGenerator
 
     private void StartRoomPositionGenerating()
     {
+        size = new Vector2Int(60, 60);
         segmentDungeonPlacer = GetComponent<SegmentDungeonPlacer>();
         dungeonSegments = new int[size.x, size.y];
+        Debug.Log(size.x + " " + size.y);
         iterations = 0;
         rooms = new SegmentRoom[roomCount];
         for (int i = 0; i < roomCount; i++)
@@ -49,9 +51,9 @@ public class SegmentGraphDungeonGenerator : GraphDungeonGenerator
                 VectorHelper.GetRandomSize(roomSize, roomSize + roomSizeRange));
         }
 
-        for (int j = 0; j < roomCount; j++)
+        for (int i = 0; i < roomCount; i++)
         {
-            for (int i = 0; i < roomCount; i++)
+            for (int j = 0; j < roomCount; j++)
             {
                 if (dungeonSegments[i, j] == 1)
                 {
@@ -92,6 +94,7 @@ public class SegmentGraphDungeonGenerator : GraphDungeonGenerator
         foreach (var hallWay in room.HallWays)
         {
             FillGridHallway((int)SegmentType.Hallway, hallWay);
+            FillGridRooms((int)SegmentType.Door, hallWay);
         }
     }
 
@@ -109,9 +112,9 @@ public class SegmentGraphDungeonGenerator : GraphDungeonGenerator
         {
             foreach (var corridor in hallWay.Corridors)
             {
-                for (int j = corridor.Left; j < corridor.Right; j++)
+                for (int i = corridor.Bottom; i < corridor.Top; i++)
                 {
-                    for (int i = corridor.Bottom; i < corridor.Top; i++)
+                    for (int j = corridor.Left; j < corridor.Right; j++)
                     {
                         if (dungeonSegments[i, j] == (int)SegmentType.Hallway)
                         {
@@ -133,10 +136,9 @@ public class SegmentGraphDungeonGenerator : GraphDungeonGenerator
 
     private void FillGrid(int value, int xFrom, int xTo, int yFrom, int yTo)
     {
-        Debug.Log(value);
-        for (int j = xFrom; j < xTo; j++)
+        for (int i = yFrom; i < yTo; i++)
         {
-            for (int i = yFrom; i < yTo; i++)
+            for (int j = xFrom; j < xTo; j++)
             {
                 dungeonSegments[i, j] = value;
             }
@@ -147,16 +149,69 @@ public class SegmentGraphDungeonGenerator : GraphDungeonGenerator
     {
         foreach (var corridor in hallWay.Corridors)
         {
+            for (int i = corridor.Bottom; i < corridor.Top; i++)
             for (int j = corridor.Left; j < corridor.Right; j++)
             {
-                for (int i = corridor.Bottom; i < corridor.Top; i++)
                 {
-                    //  if (dungeonSegments[i, j] == 0)
+                    if (dungeonSegments[i, j] == 0)
                     {
                         dungeonSegments[i, j] = value;
                     }
                 }
             }
+        }
+    }
+
+    private void FillGridRooms(int value, HallWay hallWay)
+    {
+        if (hallWay.Corridors.Length < 2)
+        {
+            SegmentCorridor corridor = hallWay.Corridors[0];
+
+            if (corridor.Horizontal)
+            {
+                dungeonSegments[corridor.Bottom, corridor.Left - 1] = value;
+                dungeonSegments[corridor.Bottom, corridor.Right] = value;
+            }
+            else
+            {
+                dungeonSegments[corridor.Bottom - 1, corridor.Left] = value;
+                dungeonSegments[corridor.Top, corridor.Left] = value;
+            }
+        }
+        else
+        {
+            SegmentRoom[] connectedRooms = new SegmentRoom[2];
+            connectedRooms[0]=rooms[hallWay.RoomsIds[0] - 1];
+            connectedRooms[1] = rooms[hallWay.RoomsIds[1] - 1];
+
+            for (int i = 0; i < 2; i++)
+            {
+                SegmentCorridor corridor = hallWay.Corridors[i];
+                if (corridor.Horizontal)
+                {
+                    if (corridor.Center.x > connectedRooms[i].Center.x)
+                    {
+                        dungeonSegments[corridor.Bottom, connectedRooms[i].Right - 1] = value;
+                    }
+                    else
+                    {
+                        dungeonSegments[corridor.Bottom, connectedRooms[i].Left] = value;
+                    }
+                }
+                else
+                {
+                    if (corridor.Center.y > connectedRooms[i].Center.y)
+                    {
+                        dungeonSegments[connectedRooms[i].Top - 1, corridor.Left] = value;
+                    }
+                    else
+                    {
+                        dungeonSegments[connectedRooms[i].Bottom, corridor.Left] = value;
+                    }
+                }
+            }
+       
         }
     }
 
@@ -250,9 +305,9 @@ public class SegmentGraphDungeonGenerator : GraphDungeonGenerator
             return false;
         }
 
-        for (int j = room.Left; j < room.Right; j++)
+        for (int i = room.Bottom; i < room.Top; i++)
         {
-            for (int i = room.Bottom; i < room.Top; i++)
+            for (int j = room.Left; j < room.Right; j++)
             {
                 if (dungeonSegments[i, j] != 0)
                 {
@@ -263,16 +318,29 @@ public class SegmentGraphDungeonGenerator : GraphDungeonGenerator
 
         foreach (var hallWay in room.HallWays)
         {
-            foreach (var corridor in hallWay.Corridors)
+            for (var index = 0; index < hallWay.Corridors.Length; index++)
             {
-                for (int j = corridor.Left; j < corridor.Right; j++)
+                var corridor = hallWay.Corridors[index];
+                for (int i = corridor.Bottom; i < corridor.Top; i++)
                 {
-                    for (int i = corridor.Bottom; i < corridor.Top; i++)
+                    for (int j = corridor.Left; j < corridor.Right; j++)
                     {
                         if (dungeonSegments[i, j] != 0 && dungeonSegments[i, j] != hallWay.RoomsIds[0] &&
                             dungeonSegments[i, j] != hallWay.RoomsIds[1])
                         {
-                            return false;
+                            if (hallWay.HaveAlternatives)
+                            {
+                                index = 0;
+
+                                hallWay.DiscardCurrentAlternative();
+                                corridor = hallWay.Corridors[index];
+                                j = corridor.Left;
+                                i = corridor.Bottom;
+                            }
+                            else
+                            {
+                                return false;
+                            }
                         }
                     }
                 }
@@ -298,15 +366,29 @@ public class SegmentGraphDungeonGenerator : GraphDungeonGenerator
     {
         Vector2 p1 = firstRoom.Center;
         Vector2 p2 = secondRoom.Center;
-        Vector2 p3 = new Vector2(p1.x, p2.y);
+
+        Vector2[] p3 = new Vector2[2];
 
 
-        SegmentRoom corridor1 = new SegmentRoom((int)SegmentType.Hallway, (p1 + p3) / 2f,
-            new Vector2Int(corridorWidth, Mathf.FloorToInt(Mathf.Abs(p1.y - p3.y)) + 1));
-        SegmentRoom corridor2 = new SegmentRoom((int)SegmentType.Hallway, (p2 + p3) / 2f,
-            new Vector2Int(Mathf.FloorToInt(Mathf.Abs(p2.x - p3.x)) + 1, corridorWidth));
+        SegmentCorridor[] corridors1 = new SegmentCorridor[2];
+        SegmentCorridor[] corridors2 = new SegmentCorridor[2];
 
-        HallWay newHallWay = new HallWay(corridor1, corridor2, firstRoom.ID, secondRoom.ID);
+        p3[0] = new Vector2(p1.x, p2.y);
+        corridors1[0] = new SegmentCorridor((int)SegmentType.Hallway, (p1 + p3[0]) / 2f,
+            new Vector2Int(corridorWidth, Mathf.FloorToInt(Mathf.Abs(p1.y - p3[0].y)) + 1), false);
+        corridors2[0] = new SegmentCorridor((int)SegmentType.Hallway, (p2 + p3[0]) / 2f,
+            new Vector2Int(Mathf.FloorToInt(Mathf.Abs(p2.x - p3[0].x)) + 1, corridorWidth), true);
+
+        p3[1] = new Vector2(p2.x, p1.y);
+        corridors1[1] = new SegmentCorridor((int)SegmentType.Hallway, (p1 + p3[1]) / 2f,
+            new Vector2Int(Mathf.FloorToInt(Mathf.Abs(p1.x - p3[1].x)) + 1, corridorWidth), true);
+        corridors2[1] = new SegmentCorridor((int)SegmentType.Hallway, (p2 + p3[1]) / 2f,
+            new Vector2Int(corridorWidth, Mathf.FloorToInt(Mathf.Abs(p2.y - p3[1].y)) + 1), false);
+
+        int alt = Random.Range(0, 2);
+        HallWay newHallWay = new HallWay(corridors1[alt], corridors2[alt], firstRoom.ID, secondRoom.ID);
+        newHallWay.AddAlternative(new[] { corridors1[0], corridors2[0] });
+        newHallWay.AddAlternative(new[] { corridors1[1], corridors2[1] });
 
         return newHallWay;
     }
@@ -314,7 +396,7 @@ public class SegmentGraphDungeonGenerator : GraphDungeonGenerator
     private HallWay ConnectStraightRooms(SegmentRoom firstRoom, SegmentRoom secondRoom)
     {
         HallWay newHallWay;
-        bool horizontal = firstRoom.Left > secondRoom.Right || firstRoom.Right < secondRoom.Left;
+        bool horizontal = firstRoom.Left >= secondRoom.Right || firstRoom.Right <= secondRoom.Left;
         int lenght;
         float yPos;
         float xPos;
@@ -322,7 +404,7 @@ public class SegmentGraphDungeonGenerator : GraphDungeonGenerator
         if (horizontal)
         {
             yPos = RectHelper.GetCenterOfCovering(firstRoom.Bottom, firstRoom.Top, secondRoom.Bottom, secondRoom.Top);
-            if (firstRoom.Left > secondRoom.Right)
+            if (firstRoom.Left >= secondRoom.Right)
             {
                 lenght = firstRoom.Left - secondRoom.Right;
                 xPos = secondRoom.Right + lenght / 2f;
@@ -339,7 +421,7 @@ public class SegmentGraphDungeonGenerator : GraphDungeonGenerator
         {
             xPos = RectHelper.GetCenterOfCovering(firstRoom.Left, firstRoom.Right, secondRoom.Left,
                 secondRoom.Right);
-            if (firstRoom.Bottom > secondRoom.Top)
+            if (firstRoom.Bottom >= secondRoom.Top)
             {
                 lenght = firstRoom.Bottom - secondRoom.Top;
                 yPos = secondRoom.Top + lenght / 2f;
@@ -354,7 +436,8 @@ public class SegmentGraphDungeonGenerator : GraphDungeonGenerator
         }
 
         newHallWay =
-            new HallWay(new SegmentRoom((int)SegmentType.Hallway, new Vector2(xPos, yPos), hallwaySize), firstRoom.ID,
+            new HallWay(new SegmentCorridor((int)SegmentType.Hallway, new Vector2(xPos, yPos), hallwaySize, horizontal),
+                firstRoom.ID,
                 secondRoom.ID);
         return newHallWay;
     }

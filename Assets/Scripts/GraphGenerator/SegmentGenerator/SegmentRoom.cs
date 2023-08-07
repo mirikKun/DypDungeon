@@ -18,6 +18,11 @@ public class SegmentRoom : Room
     private List<HallWay> hallWays = new List<HallWay>();
 
     public List<HallWay> HallWays => hallWays;
+
+    public SegmentRoom()
+    {
+    }
+
     public SegmentRoom(int id, Vector2 center, Vector2Int size)
     {
         ID = id;

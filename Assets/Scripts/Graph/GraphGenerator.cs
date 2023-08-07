@@ -161,7 +161,7 @@ public class GraphGenerator
     private bool CheckOnIterations()
     {
         iterations++;
-        if (iterations > 1450)
+        if (iterations > 2450)
         {
             Debug.Log("Out of iterations");
             return true;

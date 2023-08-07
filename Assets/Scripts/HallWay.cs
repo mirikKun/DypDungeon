@@ -2,12 +2,12 @@ using System.Collections.Generic;
 
 public class HallWay
 {
-    public SegmentRoom[] Corridors { get;private set ; }
+    public SegmentCorridor[] Corridors { get;private set ; }
     public int[] RoomsIds { get; private set; }
-    public List<SegmentRoom[]> alternatives=new List<SegmentRoom[]>();
-    public bool AreAlternatives => alternatives.Count > 1;
+    public List<SegmentCorridor[]> alternatives=new List<SegmentCorridor[]>();
+    public bool HaveAlternatives => alternatives.Count > 1;
 
-    public void AddAlternative(SegmentRoom[] alternative)
+    public void AddAlternative(SegmentCorridor[] alternative)
     {
         alternatives.Add(alternative);
     }
@@ -19,13 +19,13 @@ public class HallWay
     }
     public bool Straight => Corridors.Length == 1;
 
-    public HallWay(SegmentRoom straightHallway,int roomId1,int roomId2)
+    public HallWay(SegmentCorridor straightHallway,int roomId1,int roomId2)
     {
         Corridors = new[] { straightHallway };
         RoomsIds = new[] { roomId1, roomId2 };
     }
 
-    public HallWay(SegmentRoom firstPartHallway,SegmentRoom secondPartHallway,int roomId1,int roomId2)
+    public HallWay(SegmentCorridor firstPartHallway,SegmentCorridor secondPartHallway,int roomId1,int roomId2)
     {
         Corridors = new[] { firstPartHallway,secondPartHallway };
         RoomsIds = new[] { roomId1, roomId2 };
