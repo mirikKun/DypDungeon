@@ -25,46 +25,45 @@ public class SegmentDungeonPlacer : DungeonPlacer
 
     public void Place(int[,] grid)
     {
-        Debug.Log(grid.GetLength(0));
         extendedGrid = ExtendArray(grid);
         for (int i = 1; i < extendedGrid.GetLength(0) - 1; i++)
         {
             for (int j = 1; j < extendedGrid.GetLength(1) - 1; j++)
             {
-                // Transform segment;
-                //
-                // if (extendedGrid[i, j] > 0)
-                // {
-                //     segment = roomPlane;
-                // }
-                // else if (extendedGrid[i, j] == -1)
-                // {
-                //     segment = hallwayPlane;
-                // }
-                // else if (extendedGrid[i, j] == -2)
-                // {
-                //     segment = doorPlane;
-                // }
-                // else
-                // {
-                //     segment = nonePlane;
-                // }
-                //
-                // Instantiate(segment, new Vector3(j, -2, i), Quaternion.identity, transform);
-
-
+                Transform segment;
+                
                 if (extendedGrid[i, j] > 0)
                 {
-                    PlaceRoom(i, j, extendedGrid[i, j]);
+                    segment = roomPlane;
                 }
                 else if (extendedGrid[i, j] == -1)
                 {
-                    PlaceHallway(i, j);
+                    segment = hallwayPlane;
                 }
                 else if (extendedGrid[i, j] == -2)
                 {
-                    PlaceDoor(i, j);
+                    segment = doorPlane;
                 }
+                else
+                {
+                    segment = nonePlane;
+                }
+                
+                Instantiate(segment, new Vector3(j, -2, i), Quaternion.identity, transform);
+
+
+                // if (extendedGrid[i, j] > 0)
+                // {
+                //     PlaceRoom(i, j, extendedGrid[i, j]);
+                // }
+                // else if (extendedGrid[i, j] == -1)
+                // {
+                //     PlaceHallway(i, j);
+                // }
+                // else if (extendedGrid[i, j] == -2)
+                // {
+                //     PlaceDoor(i, j);
+                // }
             
 
             }

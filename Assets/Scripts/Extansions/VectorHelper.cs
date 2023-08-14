@@ -47,4 +47,8 @@ public static class VectorHelper
     {
         return new Vector2Int(Random.Range(min, max), Random.Range(min, max));
     }
+    public static Vector2Int GetVector2Int( this Vector2 vector2)
+    {
+        return new Vector2Int(Mathf.FloorToInt(vector2.x), Mathf.FloorToInt(vector2.y));
+    }
 }

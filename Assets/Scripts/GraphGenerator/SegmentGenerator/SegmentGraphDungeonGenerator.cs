@@ -15,7 +15,6 @@ public class SegmentGraphDungeonGenerator : GraphDungeonGenerator
     private SegmentDungeonPlacer segmentDungeonPlacer;
 
 
-
     public override void GenerateDungeon()
     {
         Random.InitState(randomSeed);
@@ -67,9 +66,9 @@ public class SegmentGraphDungeonGenerator : GraphDungeonGenerator
             foreach (var hallWay in room.HallWays)
             {
                 FillGridDoors((int)SegmentType.Door, hallWay);
-
             }
         }
+
         GraphGenerator.PrintSyntaxMatrix(dungeonSegments);
         segmentDungeonPlacer.Place(dungeonSegments);
         //StartCoroutine(StepsPresent());
@@ -99,7 +98,7 @@ public class SegmentGraphDungeonGenerator : GraphDungeonGenerator
         }
     }
 
-    
+
     private void ClearRoom(SegmentRoom room)
     {
         if (!room.Placed)
@@ -184,7 +183,7 @@ public class SegmentGraphDungeonGenerator : GraphDungeonGenerator
         else
         {
             SegmentRoom[] connectedRooms = new SegmentRoom[2];
-            connectedRooms[0]=rooms[hallWay.RoomsIds[0] - 1];
+            connectedRooms[0] = rooms[hallWay.RoomsIds[0] - 1];
             connectedRooms[1] = rooms[hallWay.RoomsIds[1] - 1];
 
             for (int i = 0; i < 2; i++)
@@ -213,7 +212,6 @@ public class SegmentGraphDungeonGenerator : GraphDungeonGenerator
                     }
                 }
             }
-       
         }
     }
 
@@ -234,7 +232,7 @@ public class SegmentGraphDungeonGenerator : GraphDungeonGenerator
 
         for (int i = 0; i < maxIterationsCount; i++)
         {
-            Vector2Int offset = CalculateOffset(i, randDirectionX);
+            Vector2Int offset = CalculateOffset(i, randDirectionX,rooms[roomIndex],previousRoom);
 
             rooms[roomIndex].SetPosition(offset + lastPosition);
             rooms[roomIndex].ClearHallways();
@@ -284,7 +282,7 @@ public class SegmentGraphDungeonGenerator : GraphDungeonGenerator
         return false;
     }
 
-    private Vector2Int CalculateOffset(int iteration, int startNumber)
+    private Vector2Int CalculateOffset(int iteration, int startNumber, SegmentRoom roomToPlace, SegmentRoom placedRoom)
     {
         int rotation;
         if (iteration < 4)
@@ -297,7 +295,26 @@ public class SegmentGraphDungeonGenerator : GraphDungeonGenerator
         }
 
         Vector2Int direction = VectorHelper.GenerateDirection(rotation);
-        return direction * GetCorridorLenght();
+
+        int lenght = GetCorridorLenght();
+        Vector2Int offset = direction * lenght;
+        bool cantBePlaced = true;
+        float distanceX = roomToPlace.Size.x / 2f + placedRoom.Size.x / 2f;
+        float distanceY = roomToPlace.Size.y / 2f + placedRoom.Size.y / 2f;
+        while (cantBePlaced)
+        {
+            if (distanceX > Mathf.Abs(offset.x )&& distanceY > Mathf.Abs(offset.y))
+            {
+                lenght++;
+                offset = direction * lenght;
+            }
+            else
+            {
+                cantBePlaced = false;
+            }
+        }
+
+        return offset;
     }
 
     private bool CanBePlacedOnGrid(SegmentRoom room)
@@ -354,7 +371,7 @@ public class SegmentGraphDungeonGenerator : GraphDungeonGenerator
 
     private HallWay ConnectRooms(SegmentRoom firstRoom, SegmentRoom secondRoom)
     {
-        if (Room.RoomAreDiagonal(firstRoom, secondRoom, corridorWidth))
+        if (Room.RoomAreDiagonal(firstRoom, secondRoom, corridorWidth * 2))
         {
             return ConnectDiagonalRooms(firstRoom, secondRoom);
         }
@@ -444,6 +461,7 @@ public class SegmentGraphDungeonGenerator : GraphDungeonGenerator
         return newHallWay;
     }
 }
+
 public enum SegmentType
 {
     None = 0,
