@@ -13,9 +13,10 @@ public class TunnelingGenerator : MonoBehaviour
     [SerializeField] private float hallWayChanceToTurn = 0.15f;
     [SerializeField] private float changeToFork = 0.1f;
     [SerializeField] private float changeToPlaceRoom = 0.1f;
+    [SerializeField] private int roomHallwayLenght = 2;
+    [SerializeField] private int roomHallwayWidth = 1;
     [SerializeField] private int minLenght = 30;
     [SerializeField] private int maxLenght = 80;
-    [SerializeField] private int roomHallWayWidth = 1;
     [SerializeField] private int roomMinSize = 3;
     [SerializeField] private int roomMaxSize = 9;
 
@@ -23,6 +24,7 @@ public class TunnelingGenerator : MonoBehaviour
     [SerializeField] private int seed = 0;
 
     private int[,] grid;
+    private List<Tunnel> tunnels = new List<Tunnel>();
     private int lenght;
     private SegmentDungeonPlacer segmentDungeonPlacer;
 
@@ -51,6 +53,8 @@ public class TunnelingGenerator : MonoBehaviour
             }
         }
 
+        PlaceRooms();
+
         segmentDungeonPlacer.RemoveEverything();
         segmentDungeonPlacer.Place(grid);
     }
@@ -68,12 +72,14 @@ public class TunnelingGenerator : MonoBehaviour
         Debug.Log("Restart");
         curRestarts++;
 
+
         if (curRestarts >= maxRestarts)
         {
             Debug.LogError("Max out");
         }
         else
         {
+            tunnels.Clear();
             grid = new int[size.y, size.x];
         }
     }
@@ -87,7 +93,9 @@ public class TunnelingGenerator : MonoBehaviour
             tunneling = FillSpace(curTunnel);
             if (tunneling)
             {
-                Direction newDirection = ChangeDirection(curTunnel.Direction);
+                
+                tunnels.Add(curTunnel);
+                Direction newDirection = curTunnel.GetTurnedDirection();
 
                 if (Random.Range(0, 1f) < hallWayChanceToTurn)
                 {
@@ -127,13 +135,22 @@ public class TunnelingGenerator : MonoBehaviour
                         hallWayStepLength);
                     lenght += hallWayStepLength;
                 }
+            }
+        }
+    }
 
-                // if (Random.Range(0, 1f) < changeToPlaceRoom)
-                // {
-                //     Vector2Int newStartPoint = (curTunnel.GetSegmentCenter() +
-                //                                 (Vector2)newDirection.GetVector() * hallWayWidth / 2f).GetVector2Int();
-                //     TryPlaceRoom(newStartPoint, newDirection);
-                // }
+    private void PlaceRooms()
+    {
+        foreach (var tunnel in tunnels)
+        {
+            Direction newDirection = tunnel.GetTurnedDirection();
+
+            if (Random.Range(0, 1f) < changeToPlaceRoom)
+            {
+                Vector2Int newStartPoint = (tunnel.GetSegmentCenter() +
+                                            (Vector2)newDirection.GetVector() * hallWayWidth / 2f).GetVector2Int();
+
+                TryPlaceRoom(newStartPoint, newDirection);
             }
         }
     }
@@ -142,14 +159,19 @@ public class TunnelingGenerator : MonoBehaviour
     {
         int roomWidth = Random.Range(roomMinSize, roomMaxSize);
         int roomLenght = Random.Range(roomMinSize, roomMaxSize);
-        Tunnel newTunnel = new Tunnel(from, direction, roomHallWayWidth, roomLenght);
-        if (grid[from.x, from.y] == 0 &&
-            !CheckOnIntersections(newTunnel.Left, newTunnel.Right, newTunnel.Bottom, newTunnel.Top))
-        {
-            grid[from.x, from.y] = 1;
+        //room
+        Tunnel newRoom = new Tunnel(from + direction.GetVector()*roomHallwayLenght, direction, roomWidth, roomLenght);
+       //roomHallway
+       Tunnel newHallway = new Tunnel(from , direction, roomHallwayWidth, roomHallwayLenght);
 
-            //FillRoom
-            FillSpace(newTunnel);
+        if (CanBePlaced(newHallway) &&
+            CanBePlaced(newRoom))
+        {
+            //Fill Room
+            FillSpace(newRoom);
+            
+            //Fill hallway to Room 
+            FillSpace(newHallway);
         }
     }
 
@@ -161,26 +183,10 @@ public class TunnelingGenerator : MonoBehaviour
         return curTunnel;
     }
 
-    private Direction ChangeDirection(Direction oldDirection)
-    {
-        int directionId = (int)oldDirection;
-        while (directionId % 2 == (int)oldDirection % 2)
-        {
-            directionId = Random.Range(0, 4);
-        }
-
-        return (Direction)directionId;
-    }
 
     private bool FillSpace(Tunnel tunnel)
     {
-        if (!tunnel.AreInBounds(grid.GetLength(0), grid.GetLength(1)))
-        {
-            Debug.Log("Out");
-            return false;
-        }
-
-        if (CheckOnIntersections(tunnel.Left, tunnel.Right, tunnel.Bottom, tunnel.Top))
+        if (!CanBePlaced(tunnel))
         {
             return false;
         }
@@ -191,6 +197,22 @@ public class TunnelingGenerator : MonoBehaviour
             {
                 grid[i, j] = 1;
             }
+        }
+
+        return true;
+    }
+
+    private bool CanBePlaced(Tunnel tunnel)
+    {
+        if (!tunnel.AreInBounds(grid.GetLength(0), grid.GetLength(1)))
+        {
+            Debug.Log("Out");
+            return false;
+        }
+
+        if (CheckOnIntersections(tunnel.Left, tunnel.Right, tunnel.Bottom, tunnel.Top))
+        {
+            return false;
         }
 
         return true;

@@ -8,7 +8,16 @@ public class Tunnel : Room
 
     public bool Fork { get; private set; }
 
+    public Direction GetTurnedDirection()
+    {
+        int directionId = (int)Direction;
+        while (directionId % 2 == (int)Direction % 2)
+        {
+            directionId = Random.Range(0, 4);
+        }
 
+        return (Direction)directionId;
+    }
     public Vector2 GetEndEdgeCenter()
     {
         if (Direction == Direction.right)
