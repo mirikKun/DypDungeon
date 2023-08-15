@@ -36,7 +36,7 @@ public class TunnelingGenerator : MonoBehaviour
     {
         curRestarts = 0;
         lenght = 0;
-
+        tunnels.Clear();
         Random.InitState(seed);
 
         segmentDungeonPlacer = GetComponent<SegmentDungeonPlacer>();
@@ -149,7 +149,14 @@ public class TunnelingGenerator : MonoBehaviour
             {
                 Vector2Int newStartPoint = (tunnel.GetSegmentCenter() +
                                             (Vector2)newDirection.GetVector() * hallWayWidth / 2f).GetVector2Int();
+                TryPlaceRoom(newStartPoint, newDirection);
+            }
 
+            newDirection = newDirection.GetOpposite();
+            if (Random.Range(0, 1f) < changeToPlaceRoom)
+            {
+                Vector2Int newStartPoint = (tunnel.GetSegmentCenter() +
+                                            (Vector2)newDirection.GetVector() * hallWayWidth / 2f).GetVector2Int();
                 TryPlaceRoom(newStartPoint, newDirection);
             }
         }

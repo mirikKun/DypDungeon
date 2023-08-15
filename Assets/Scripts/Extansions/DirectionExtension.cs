@@ -23,26 +23,10 @@ public static class DirectionExtension
                 break;
         }
     }
-    public static Vector2Int GetStartOffsetVector(this Direction direction)
+
+    public static Direction GetOpposite(this Direction direction)
     {
-        switch (direction)
-        {
-            case Direction.right:
-                return new Vector2Int(0, 0);
-                break;
-            case Direction.top:
-                return new Vector2Int(0, 0);
-
-                break;
-            case Direction.left:
-                return new Vector2Int(-1, 0);
-
-                break;
-            default :
-                return new Vector2Int(0, -1);
-
-                break;
-        }
+        return (Direction)(((int)direction + 2) % 4);
     }
 }
 
