@@ -4,12 +4,15 @@ using UnityEngine;
     {
         public DungeonSegment cube;
 
+        [SerializeField] private float height=2;
         public DungeonSegment PlaceCorridor( Vector3 corridorScale,Vector3 corridorPosition,Vector3 dungeonOffset)
         {
             DungeonSegment corridor =
                 Instantiate(cube, transform.position + corridorPosition - dungeonOffset, Quaternion.identity);
             corridor.SetParent(transform);
-            corridor.SetupScale(corridorScale);
+            
+            Vector3 scale = new Vector3(corridorScale.x, height, corridorScale.z);
+            corridor.SetupScale(scale);
             return corridor;
         }
 
@@ -19,7 +22,7 @@ using UnityEngine;
             DungeonSegment corridor =
                 Instantiate(cube, transform.position + positionBetween - dungeonOffset, Quaternion.identity);
             corridor.SetParent(transform);
-            corridor.SetupScale( new Vector3(room.GetWidth, 10, room.GetHeight));
+            corridor.SetupScale( new Vector3(room.GetWidth, height, room.GetHeight));
      
             float angle=room.angle+90;
         
@@ -36,17 +39,9 @@ using UnityEngine;
             DungeonSegment room = Instantiate(cube, transform.position + roomPosition - dungeonOffset, Quaternion.identity);
             room.SetParent(transform);
             room.SetText(index+1);
-            room.SetupScale(new Vector3(r.GetWidth, 10, r.GetHeight));
+            room.SetupScale(new Vector3(r.GetWidth, height, r.GetHeight));
             room.gameObject.name = "room "+index;
             return room;
         }
-        public void RemoveEverything()
-        {
-            int childCount = transform.childCount;
-            for (int i = 0; i < childCount; i++)
-            {
-                DestroyImmediate(transform.GetChild(0).gameObject);
-            }
-
-        }
+     
     }

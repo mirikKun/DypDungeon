@@ -7,6 +7,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
+[RequireComponent(typeof(SimpleDungeonPlacer))]
 public class DungeonGenerator : MonoBehaviour
 {
     public DungeonSegment cube;
@@ -456,13 +457,7 @@ public class DungeonGenerator : MonoBehaviour
         Vector2 secondCenter = secondRoom.GetPosition();
 
 
-        // GameObject cube1 = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        // cube1.transform.position = new Vector3(firstCenter.x, 0, firstCenter.y) + dungeonOffset();
-        //
-        // GameObject cube2 = GameObject.CreatePrimitive(PrimitiveType.Cube);
-        // cube2.transform.position = new Vector3(secondCenter.x, 0, secondCenter.y) + dungeonOffset();
-
-
+    
         float distance = Vector2.Distance(firstCenter, secondCenter);
 
 
@@ -532,17 +527,12 @@ public class DungeonGenerator : MonoBehaviour
 
 
         DungeonSegment corridor = Instantiate(cube, corridorPosition + dungeonOffset(), Quaternion.identity);
-        float wallLenght = cornerDistance;
 
 
         corridor.SetParent(transform);
         corridor.SetupScale(new Vector3(cornerDistance, 10, corridorWidth));
         corridor.SetupRotation(angle);
-        Vector3 firstWallLeft;
-        Vector3 firstWallRight;
-
-        Vector3 secondWallRight;
-        Vector3 secondWallLeft;
+     
 
         corridor.gameObject.name = "DiagonalCorridor";
         finalRoomObjects.Add(corridor);
@@ -558,8 +548,7 @@ public class DungeonGenerator : MonoBehaviour
         Vector3 corridorScale;
         if (horizontal)
         {
-            // zPos = (firstRoom.bottom + secondRoom.bottom) / 2f +
-            //        ((firstRoom.top + secondRoom.top) / 2f - (firstRoom.bottom + secondRoom.bottom) / 2f) / 2;
+
             zPos = GetCenterOfCovering(firstRoom.Bottom, firstRoom.Top, secondRoom.Bottom, secondRoom.Top);
             if (firstRoom.Left > secondRoom.Right)
             {
@@ -590,7 +579,7 @@ public class DungeonGenerator : MonoBehaviour
                 zPos = firstRoom.Top + lenght / 2;
             }
 
-            corridorScale = new Vector3(corridorWidth, 10, lenght);
+            corridorScale = new Vector3(corridorWidth, 1, lenght);
         }
 
         PlaceCorridor(xPos, zPos, corridorScale, horizontal);

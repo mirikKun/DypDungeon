@@ -1,7 +1,9 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
+using Random = UnityEngine.Random;
 
 [ExecuteInEditMode]
 [RequireComponent(typeof(SegmentDungeonPlacer))]
@@ -22,34 +24,40 @@ public class TunnelingGenerator : MonoBehaviour
 
     [SerializeField] private Vector2Int size = new(100, 100);
     [SerializeField] private int seed = 0;
-
+    [SerializeField] private StartPoint[] startPoints;
     private int[,] grid;
     private List<Tunnel> tunnels = new List<Tunnel>();
+    private List<Tunnel> tunnelBranches = new List<Tunnel>();
     private int lenght;
     private SegmentDungeonPlacer segmentDungeonPlacer;
 
     private int maxRestarts = 11;
     private int curRestarts = 0;
 
+    [Serializable]
+    private struct StartPoint
+    {
+        public Vector2 startPoint;
+        public Direction startDirection;
+        public int startLenght;
+    }
+
     [ContextMenu("Generate")]
     void Generate()
     {
-        curRestarts = 0;
-        lenght = 0;
-        tunnels.Clear();
+        ClearAll();
+
         Random.InitState(seed);
 
         segmentDungeonPlacer = GetComponent<SegmentDungeonPlacer>();
-        grid = new int[size.y, size.x];
-        Tunnel curTunnel = GetStartTunnel();
+        SetStartTunnels();
         while (curRestarts < maxRestarts && lenght < minLenght)
         {
-            Tunneling(curTunnel);
-
+            Tunneling();
             if (lenght < minLenght)
             {
                 Restart();
-                curTunnel = GetStartTunnel();
+                SetStartTunnels();
             }
         }
 
@@ -59,12 +67,15 @@ public class TunnelingGenerator : MonoBehaviour
         segmentDungeonPlacer.Place(grid);
     }
 
-    private Tunnel GetStartTunnel()
+    private void SetStartTunnels()
     {
-        Vector2 curPoint = new Vector2(0, (size.y / 2f - hallWayWidth / 2f));
-        Direction newDirection = Direction.right;
-        Tunnel curTunnel = new Tunnel(curPoint, newDirection, hallWayWidth, hallWayStepLength * 3);
-        return curTunnel;
+        foreach (var startPoint in startPoints)
+        {
+            Vector2 curPoint = startPoint.startPoint;
+            Direction newDirection = startPoint.startDirection;
+            Tunnel curTunnel = new Tunnel(curPoint, newDirection, hallWayWidth, startPoint.startLenght);
+            tunnelBranches.Add(curTunnel);
+        }
     }
 
     private void Restart()
@@ -79,64 +90,92 @@ public class TunnelingGenerator : MonoBehaviour
         }
         else
         {
-            tunnels.Clear();
-            grid = new int[size.y, size.x];
+            ClearAll();
         }
     }
 
-    private void Tunneling(Tunnel curTunnel)
+    private void ClearAll()
+    {
+        lenght = 0;
+
+        tunnelBranches.Clear();
+        tunnels.Clear();
+        grid = new int[size.y, size.x];
+    }
+    private void Tunneling()
     {
         bool tunneling = true;
+
+
+        //FillTunnel
         while (tunneling && lenght < maxLenght)
         {
-            //FillTunnel
-            tunneling = FillSpace(curTunnel);
-            if (tunneling)
+            for (var i = 0; i < tunnelBranches.Count; i++)
             {
-                
-                tunnels.Add(curTunnel);
-                Direction newDirection = curTunnel.GetTurnedDirection();
-
-                if (Random.Range(0, 1f) < hallWayChanceToTurn)
+                var tunnelBranch = tunnelBranches[i];
+                tunneling = FillSpace(tunnelBranch);
+                if (tunneling)
                 {
-                    curTunnel = PlaceFork(curTunnel);
-                    //FillFork
-                    tunneling = FillSpace(curTunnel);
-                    if (!tunneling)
+                    tunnelBranches[i] = TunnelingMakeStep(tunnelBranch);
+                    if (tunnelBranches[i] == null)
                     {
-                        return;
+                        tunnelBranches.RemoveAt(i);
                     }
-
-                    Vector2 newStartPoint = curTunnel.GetEndSegmentCenter() +
-                                            (Vector2)newDirection.GetVector() * forkWidth / 2f;
-                    curTunnel = new Tunnel(newStartPoint, newDirection, hallWayWidth, hallWayStepLength);
-                    lenght += forkWidth;
                 }
                 else
                 {
-                    if (Random.Range(0, 1f) < changeToFork)
-                    {
-                        curTunnel = PlaceFork(curTunnel);
-                        //FillFork
-                        tunneling = FillSpace(curTunnel);
-                        if (!tunneling)
-                        {
-                            return;
-                        }
-
-                        Vector2 newStartPoint = curTunnel.GetEndSegmentCenter() +
-                                                (Vector2)newDirection.GetVector() * forkWidth / 2f;
-                        Tunnel newTunnel = new Tunnel(newStartPoint, newDirection, hallWayWidth, hallWayStepLength);
-                        lenght += forkWidth;
-                        Tunneling(newTunnel);
-                    }
-
-                    curTunnel = new Tunnel(curTunnel.GetEndEdgeCenter(), curTunnel.Direction, hallWayWidth,
-                        hallWayStepLength);
-                    lenght += hallWayStepLength;
+                    tunnelBranches.RemoveAt(i);
                 }
             }
         }
+    }
+
+
+    private Tunnel TunnelingMakeStep(Tunnel curTunnel)
+    {
+        tunnels.Add(curTunnel);
+        Direction newDirection = curTunnel.GetTurnedDirection();
+
+        if (Random.Range(0, 1f) < hallWayChanceToTurn)
+        {
+            curTunnel = PlaceFork(curTunnel);
+            //FillFork
+            bool tunneling = FillSpace(curTunnel);
+            if (!tunneling)
+            {
+                return null;
+            }
+
+            Vector2 newStartPoint = curTunnel.GetEndSegmentCenter() +
+                                    (Vector2)newDirection.GetVector() * forkWidth / 2f;
+            curTunnel = new Tunnel(newStartPoint, newDirection, hallWayWidth, hallWayStepLength);
+            lenght += forkWidth;
+        }
+        else
+        {
+            if (Random.Range(0, 1f) < changeToFork)
+            {
+                curTunnel = PlaceFork(curTunnel);
+                //FillFork
+                bool tunneling = FillSpace(curTunnel);
+                if (!tunneling)
+                {
+                    return null;
+                }
+
+                Vector2 newStartPoint = curTunnel.GetEndSegmentCenter() +
+                                        (Vector2)newDirection.GetVector() * forkWidth / 2f;
+                Tunnel newTunnel = new Tunnel(newStartPoint, newDirection, hallWayWidth, hallWayStepLength);
+                lenght += forkWidth;
+                tunnelBranches.Add(newTunnel);
+            }
+
+            curTunnel = new Tunnel(curTunnel.GetEndEdgeCenter(), curTunnel.Direction, hallWayWidth,
+                hallWayStepLength);
+            lenght += hallWayStepLength;
+        }
+
+        return curTunnel;
     }
 
     private void PlaceRooms()
@@ -167,16 +206,16 @@ public class TunnelingGenerator : MonoBehaviour
         int roomWidth = Random.Range(roomMinSize, roomMaxSize);
         int roomLenght = Random.Range(roomMinSize, roomMaxSize);
         //room
-        Tunnel newRoom = new Tunnel(from + direction.GetVector()*roomHallwayLenght, direction, roomWidth, roomLenght);
-       //roomHallway
-       Tunnel newHallway = new Tunnel(from , direction, roomHallwayWidth, roomHallwayLenght);
+        Tunnel newRoom = new Tunnel(from + direction.GetVector() * roomHallwayLenght, direction, roomWidth, roomLenght);
+        //roomHallway
+        Tunnel newHallway = new Tunnel(from, direction, roomHallwayWidth, roomHallwayLenght);
 
         if (CanBePlaced(newHallway) &&
             CanBePlaced(newRoom))
         {
             //Fill Room
             FillSpace(newRoom);
-            
+
             //Fill hallway to Room 
             FillSpace(newHallway);
         }
