@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -9,22 +8,22 @@ using Random = UnityEngine.Random;
 [RequireComponent(typeof(SegmentDungeonPlacer))]
 public class TunnelingGenerator : MonoBehaviour
 {
-    [SerializeField] private int hallWayWidth = 4;
-    [SerializeField] private int forkWidth = 6;
-    [SerializeField] private int hallWayStepLength = 8;
-    [SerializeField] private float hallWayChanceToTurn = 0.15f;
-    [SerializeField] private float changeToFork = 0.1f;
-    [SerializeField] private float changeToPlaceRoom = 0.1f;
+    [SerializeField] private  THallway[] hallways;
+    private  THallway currentHallway;
+    [SerializeField] private float changeToPlaceRoom = 0.53f;
+
     [SerializeField] private int roomHallwayLenght = 2;
     [SerializeField] private int roomHallwayWidth = 1;
-    [SerializeField] private int minLenght = 30;
-    [SerializeField] private int maxLenght = 80;
-    [SerializeField] private int roomMinSize = 3;
-    [SerializeField] private int roomMaxSize = 9;
+
+    [SerializeField] private int roomMinSize = 8;
+    [SerializeField] private int roomMaxSize = 16;
+
+    [SerializeField] private int minLenght = 110;
+    [SerializeField] private int maxLenght = 160;
 
     [SerializeField] private Vector2Int size = new(100, 100);
-    [SerializeField] private int seed = 0;
-    [SerializeField] private StartPoint[] startPoints;
+    [SerializeField] private int seed = 4;
+    [SerializeField] private TStartPoint[] startPoints;
     private int[,] grid;
     private List<Tunnel> tunnels = new List<Tunnel>();
     private List<Tunnel> tunnelBranches = new List<Tunnel>();
@@ -34,13 +33,6 @@ public class TunnelingGenerator : MonoBehaviour
     private int maxRestarts = 11;
     private int curRestarts = 0;
 
-    [Serializable]
-    private struct StartPoint
-    {
-        public Vector2 startPoint;
-        public Direction startDirection;
-        public int startLenght;
-    }
 
     [ContextMenu("Generate")]
     void Generate()
@@ -61,8 +53,13 @@ public class TunnelingGenerator : MonoBehaviour
             }
         }
 
-        PlaceRooms();
+        //GenerateRooms();
 
+        CreateDungeon();
+    }
+
+    private void CreateDungeon()
+    {
         segmentDungeonPlacer.RemoveEverything();
         segmentDungeonPlacer.Place(grid);
     }
@@ -73,7 +70,7 @@ public class TunnelingGenerator : MonoBehaviour
         {
             Vector2 curPoint = startPoint.startPoint;
             Direction newDirection = startPoint.startDirection;
-            Tunnel curTunnel = new Tunnel(curPoint, newDirection, hallWayWidth, startPoint.startLenght);
+            Tunnel curTunnel = new Tunnel(curPoint, newDirection, currentHallway.hallWayWidth, startPoint.startLenght);
             tunnelBranches.Add(curTunnel);
         }
     }
@@ -96,11 +93,13 @@ public class TunnelingGenerator : MonoBehaviour
 
     private void ClearAll()
     {
+        
         lenght = 0;
-
         tunnelBranches.Clear();
         tunnels.Clear();
         grid = new int[size.y, size.x];
+
+        currentHallway = hallways[0];
     }
     private void Tunneling()
     {
@@ -136,7 +135,7 @@ public class TunnelingGenerator : MonoBehaviour
         tunnels.Add(curTunnel);
         Direction newDirection = curTunnel.GetTurnedDirection();
 
-        if (Random.Range(0, 1f) < hallWayChanceToTurn)
+        if (Random.Range(0, 1f) < currentHallway.hallWayChanceToTurn)
         {
             curTunnel = PlaceFork(curTunnel);
             //FillFork
@@ -147,13 +146,13 @@ public class TunnelingGenerator : MonoBehaviour
             }
 
             Vector2 newStartPoint = curTunnel.GetEndSegmentCenter() +
-                                    (Vector2)newDirection.GetVector() * forkWidth / 2f;
-            curTunnel = new Tunnel(newStartPoint, newDirection, hallWayWidth, hallWayStepLength);
-            lenght += forkWidth;
+                                    (Vector2)newDirection.GetVector() * currentHallway.forkWidth / 2f;
+            curTunnel = new Tunnel(newStartPoint, newDirection, currentHallway.hallWayWidth, currentHallway.hallWayStepLength);
+            lenght += currentHallway.forkWidth;
         }
         else
         {
-            if (Random.Range(0, 1f) < changeToFork)
+            if (Random.Range(0, 1f) < currentHallway.changeToFork)
             {
                 curTunnel = PlaceFork(curTunnel);
                 //FillFork
@@ -164,21 +163,20 @@ public class TunnelingGenerator : MonoBehaviour
                 }
 
                 Vector2 newStartPoint = curTunnel.GetEndSegmentCenter() +
-                                        (Vector2)newDirection.GetVector() * forkWidth / 2f;
-                Tunnel newTunnel = new Tunnel(newStartPoint, newDirection, hallWayWidth, hallWayStepLength);
-                lenght += forkWidth;
+                                        (Vector2)newDirection.GetVector() * currentHallway.forkWidth / 2f;
+                Tunnel newTunnel = new Tunnel(newStartPoint, newDirection, currentHallway.hallWayWidth, currentHallway.hallWayStepLength);
+                lenght += currentHallway.forkWidth;
                 tunnelBranches.Add(newTunnel);
             }
 
-            curTunnel = new Tunnel(curTunnel.GetEndEdgeCenter(), curTunnel.Direction, hallWayWidth,
-                hallWayStepLength);
-            lenght += hallWayStepLength;
+            curTunnel = new Tunnel(curTunnel.GetEndEdgeCenter(), curTunnel.Direction, currentHallway.hallWayWidth, currentHallway.hallWayStepLength);
+            lenght += currentHallway.hallWayStepLength;
         }
 
         return curTunnel;
     }
 
-    private void PlaceRooms()
+    private void GenerateRooms()
     {
         foreach (var tunnel in tunnels)
         {
@@ -187,7 +185,7 @@ public class TunnelingGenerator : MonoBehaviour
             if (Random.Range(0, 1f) < changeToPlaceRoom)
             {
                 Vector2Int newStartPoint = (tunnel.GetSegmentCenter() +
-                                            (Vector2)newDirection.GetVector() * hallWayWidth / 2f).GetVector2Int();
+                                            (Vector2)newDirection.GetVector() * currentHallway.hallWayWidth / 2f).GetVector2Int();
                 TryPlaceRoom(newStartPoint, newDirection);
             }
 
@@ -195,7 +193,7 @@ public class TunnelingGenerator : MonoBehaviour
             if (Random.Range(0, 1f) < changeToPlaceRoom)
             {
                 Vector2Int newStartPoint = (tunnel.GetSegmentCenter() +
-                                            (Vector2)newDirection.GetVector() * hallWayWidth / 2f).GetVector2Int();
+                                            (Vector2)newDirection.GetVector() * currentHallway.hallWayWidth / 2f).GetVector2Int();
                 TryPlaceRoom(newStartPoint, newDirection);
             }
         }
@@ -223,9 +221,8 @@ public class TunnelingGenerator : MonoBehaviour
 
     private Tunnel PlaceFork(Tunnel curTunnel)
     {
-        curTunnel = new Tunnel(curTunnel.GetEndEdgeCenter(), curTunnel.Direction, forkWidth,
-            forkWidth);
-        lenght += hallWayStepLength;
+        curTunnel = new Tunnel(curTunnel.GetEndEdgeCenter(), curTunnel.Direction, currentHallway.forkWidth, currentHallway.forkWidth);
+        lenght += currentHallway.hallWayStepLength;
         return curTunnel;
     }
 

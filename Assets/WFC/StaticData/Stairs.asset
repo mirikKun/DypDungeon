@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a798eb98abea9a408795e2746f1e260, type: 3}
+  m_Name: Stairs
+  m_EditorClassIdentifier: 
+  Element: {fileID: 800604654918678623, guid: ab824aec52e905740a3a8dee7b47737d, type: 3}
+  WfcPositioning: 1
+  ForwardEdge: 1
+  BackEdge: 0
+  RightEdge: 2
+  LeftEdge: 2
+  UpperEdge: 0
+  BottomEdge: 1
+  BLBVertex: 1
+  BRBVertex: 1
+  FLBVertex: 1
+  FRBVertex: 1
+  BLUVertex: 0
+  BRUVertex: 0
+  FLUVertex: 1
+  FRUVertex: 1
