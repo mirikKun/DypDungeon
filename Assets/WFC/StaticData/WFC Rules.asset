@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1a33adc89b76401893cf0ad6c0a5cfc3, type: 3}
+  m_Name: WFC Rules
+  m_EditorClassIdentifier: 
+  _size: {x: 10, y: 10}
+  _wfcElements:
+  - {fileID: 11400000, guid: b230dcc96e1fdf34a8ed5ced3e72d18b, type: 2}
+  - {fileID: 11400000, guid: 53cf4282ad0564b4aaa7907c1f6d5ea5, type: 2}
+  - {fileID: 11400000, guid: d8560dd0d8bae1c45b2d2c675b5e858a, type: 2}
+  - {fileID: 11400000, guid: 0a212fddec19ceb40bcfeea54f0b3141, type: 2}
+  - {fileID: 11400000, guid: 70ef7457cdb739c408634f295c7bb104, type: 2}
+  - {fileID: 11400000, guid: 9fe42463022a5684ca021419b7698ea9, type: 2}
+  - {fileID: 11400000, guid: 67d5dc52d8ba2bc48829ab36606c7cc2, type: 2}
+  - {fileID: 11400000, guid: e21d1ad61f9e8ac458af28a4fd73674d, type: 2}
+  - {fileID: 11400000, guid: 86948611d9eb8e2439fc86b660ac57c4, type: 2}
+  _tileSize: 1

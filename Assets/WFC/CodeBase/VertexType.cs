@@ -2,8 +2,7 @@ namespace WaveFunctionCollapse
 {
     public enum VertexType
     {
-        Empty, 
-   
+        Empty,
         Full,
         LeftBridge,
         RightBridge

@@ -6,14 +6,14 @@ using WaveFunctionCollapse;
 [CreateAssetMenu(fileName = "WFC Element", menuName = "WFC/Element")]
 public class WfcElement : ScriptableObject
 {
-    public Transform Element;
     public WfcPositioning WfcPositioning;
     [Space]
 
     public WfcEdgeType ForwardEdge;
-    public WfcEdgeType BackEdge;
-    
+
     public WfcEdgeType RightEdge;
+    public WfcEdgeType BackEdge;
+
     public WfcEdgeType LeftEdge;
     
     public WfcEdgeType UpperEdge;
@@ -28,4 +28,13 @@ public class WfcElement : ScriptableObject
     public VertexType BRUVertex;
     public VertexType FLUVertex;
     public VertexType FRUVertex;
+
+    public WfcEdgeType[] Edges => new WfcEdgeType[]
+    {
+        ForwardEdge,RightEdge,BackEdge,LeftEdge,UpperEdge,BottomEdge
+    };
+    public VertexType[] Vertexes => new VertexType[]
+    {
+        BLBVertex,BRBVertex,FLBVertex,FRBVertex,BLUVertex,BRUVertex,FLUVertex,FRUVertex
+    };
 }

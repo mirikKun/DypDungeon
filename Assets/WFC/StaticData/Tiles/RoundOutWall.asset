@@ -10,21 +10,20 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0a798eb98abea9a408795e2746f1e260, type: 3}
-  m_Name: BridgeEnter
+  m_Name: RoundOutWall
   m_EditorClassIdentifier: 
-  Element: {fileID: 800604654918678623, guid: ab824aec52e905740a3a8dee7b47737d, type: 3}
-  WfcPositioning: 0
+  WfcPositioning: 1
   ForwardEdge: 1
-  BackEdge: 1
   RightEdge: 1
-  LeftEdge: 1
-  UpperEdge: 1
-  BottomEdge: 1
-  BLBVertex: 1
+  BackEdge: 0
+  LeftEdge: 0
+  UpperEdge: 5
+  BottomEdge: 5
+  BLBVertex: 0
   BRBVertex: 1
   FLBVertex: 1
   FRBVertex: 1
-  BLUVertex: 1
+  BLUVertex: 0
   BRUVertex: 1
   FLUVertex: 1
   FRUVertex: 1

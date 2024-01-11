@@ -4,7 +4,7 @@ namespace WaveFunctionCollapse
     {
         Empty,
         Full,
-        FullOrWall,
+        Any,
         Triangle,
         RoundIn,
         RoundOut,
