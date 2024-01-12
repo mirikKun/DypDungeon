@@ -17,6 +17,7 @@ public class WFCLevelGenerator : MonoBehaviour
 
     private Queue<Vector2Int> recalcPossibleTilesQueue = new Queue<Vector2Int>();
     private List<WfcElementObject>[,] possibleTiles;
+    [SerializeField]private WfcElementObject _edgeObject;
     public WfcElementObject first;
     public WfcElementObject second;
     public WfcRotations direction;
@@ -34,51 +35,110 @@ public class WFCLevelGenerator : MonoBehaviour
         Debug.Log("__");
         for (int i = 0; i < countBeforeAdding; i++)
         {
-            WfcElementObject clone;
-            Transform parent = TilePrefabs[0].transform.parent;
-            switch (TilePrefabs[i].WfcPositioning)
-            {
-                case WfcPositioning.OneRotation:
-                    break;
-
-                case WfcPositioning.HorizontalRotations:
-                    TilePrefabs[i].Weight /= 4;
-                    if (TilePrefabs[i].Weight <= 0) TilePrefabs[i].Weight = 1;
-
-
-                    clone = Instantiate(TilePrefabs[i], TilePrefabs[i].transform.position + Vector3.forward * 1.2f,
-                        Quaternion.identity, parent);
-                    clone.GetVertexes();
-
-                    clone.RotateX90();
-                    TilePrefabs.Add(clone);
-
-                    clone = Instantiate(TilePrefabs[i], TilePrefabs[i].transform.position + Vector3.forward * 2 * 1.2f,
-                        Quaternion.identity, parent);
-                    clone.GetVertexes();
-
-                    clone.RotateX90();
-                    clone.RotateX90();
-                    TilePrefabs.Add(clone);
-
-                    clone = Instantiate(TilePrefabs[i], TilePrefabs[i].transform.position + Vector3.forward * 3 * 1.2f,
-                        Quaternion.identity, parent);
-                    clone.GetVertexes();
-                    
-                    clone.RotateX90();
-                    clone.RotateX90();
-                    clone.RotateX90();
-                    TilePrefabs.Add(clone);
-                    break;
-                case WfcPositioning.AllRotations:
-
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
+            SetupTile(i);
         }
 
         Generate();
+    }
+
+    private void SetupTile(int tileIndex)
+    {
+        WfcElementObject clone;
+        Transform parent = TilePrefabs[0].transform.parent;
+        switch (TilePrefabs[tileIndex].WfcPositioning)
+        {
+            case WfcPositioning.OneRotation:
+                break;
+
+            case WfcPositioning.HorizontalRotations:
+                TilePrefabs[tileIndex].Weight /= 4;
+                if (TilePrefabs[tileIndex].Weight <= 0) TilePrefabs[tileIndex].Weight = 0.5f;
+
+
+                clone = Instantiate(TilePrefabs[tileIndex], TilePrefabs[tileIndex].transform.position + Vector3.forward * 1.2f,
+                    Quaternion.identity, parent);
+                clone.GetVertexes();
+                clone.RotateX90();
+                TilePrefabs.Add(clone);
+
+                clone = Instantiate(TilePrefabs[tileIndex], TilePrefabs[tileIndex].transform.position + Vector3.forward * 2 * 1.2f,
+                    Quaternion.identity, parent);
+                clone.GetVertexes();
+                clone.RotateX90();
+                clone.RotateX90();
+                TilePrefabs.Add(clone);
+
+                clone = Instantiate(TilePrefabs[tileIndex], TilePrefabs[tileIndex].transform.position + Vector3.forward * 3 * 1.2f,
+                    Quaternion.identity, parent);
+                clone.GetVertexes();
+                clone.RotateX90();
+                clone.RotateX90();
+                clone.RotateX90();
+                TilePrefabs.Add(clone);
+                break;
+            case WfcPositioning.AllRotations:
+                TilePrefabs[tileIndex].Weight /= 8;
+                if (TilePrefabs[tileIndex].Weight <= 0) TilePrefabs[tileIndex].Weight = 0.5f;
+
+
+                clone = Instantiate(TilePrefabs[tileIndex], TilePrefabs[tileIndex].transform.position + Vector3.forward * 1.2f,
+                    Quaternion.identity, parent);
+                clone.GetVertexes();
+                clone.RotateX90();
+                TilePrefabs.Add(clone);
+
+                clone = Instantiate(TilePrefabs[tileIndex], TilePrefabs[tileIndex].transform.position + Vector3.forward * 2 * 1.2f,
+                    Quaternion.identity, parent);
+                clone.GetVertexes();
+                clone.RotateX90();
+                clone.RotateX90();
+                TilePrefabs.Add(clone);
+
+                clone = Instantiate(TilePrefabs[tileIndex], TilePrefabs[tileIndex].transform.position + Vector3.forward * 3 * 1.2f,
+                    Quaternion.identity, parent);
+                clone.GetVertexes();
+                clone.RotateX90();
+                clone.RotateX90();
+                clone.RotateX90();
+                TilePrefabs.Add(clone);
+
+                /////////////
+                clone = Instantiate(TilePrefabs[tileIndex], TilePrefabs[tileIndex].transform.position + Vector3.forward * 4 * 1.2f,
+                    Quaternion.identity, parent);
+                clone.GetVertexes();
+                clone.RotateY180();
+                TilePrefabs.Add(clone);
+
+                clone = Instantiate(TilePrefabs[tileIndex], TilePrefabs[tileIndex].transform.position + Vector3.forward * 5 * 1.2f,
+                    Quaternion.identity, parent);
+                clone.GetVertexes();
+                clone.RotateY180();
+
+                clone.RotateX90();
+                TilePrefabs.Add(clone);
+
+                clone = Instantiate(TilePrefabs[tileIndex], TilePrefabs[tileIndex].transform.position + Vector3.forward * 6 * 1.2f,
+                    Quaternion.identity, parent);
+                clone.GetVertexes();
+                clone.RotateY180();
+
+                clone.RotateX90();
+                clone.RotateX90();
+                TilePrefabs.Add(clone);
+
+                clone = Instantiate(TilePrefabs[tileIndex], TilePrefabs[tileIndex].transform.position + Vector3.forward * 7 * 1.2f,
+                    Quaternion.identity, parent);
+                clone.GetVertexes();
+                clone.RotateY180();
+
+                clone.RotateX90();
+                clone.RotateX90();
+                clone.RotateX90();
+                TilePrefabs.Add(clone);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
     }
 
     private void Update()
@@ -114,7 +174,7 @@ public class WFCLevelGenerator : MonoBehaviour
 
             recalcPossibleTilesQueue.Clear();
             EnqueueNeighboursToRecalc(new Vector2Int(MapSize.x / 2, MapSize.y / 2));
-
+            FillEdges();
             bool success = GenerateAllPossibleTiles();
 
             if (success) break;
@@ -123,6 +183,25 @@ public class WFCLevelGenerator : MonoBehaviour
         PlaceAllTiles();
     }
 
+    private void FillEdges()
+    {
+        _edgeObject.GetVertexes();
+
+        for (int i = 0; i < MapSize.x; i++)
+        {
+            for (int j = 0; j < MapSize.y ; j++)
+            {
+                if (i == 0 || j == 0 ||
+                    i == MapSize.x - 1 || j == MapSize.y - 1)
+                {
+                    possibleTiles[i, j] =
+                        new List<WfcElementObject> { _edgeObject };
+                }
+            }
+        }
+            
+       
+    }
     private bool GenerateAllPossibleTiles()
     {
         int maxIterations = MapSize.x * MapSize.y;

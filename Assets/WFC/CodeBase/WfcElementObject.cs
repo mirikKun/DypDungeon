@@ -88,7 +88,7 @@ namespace WaveFunctionCollapse
 
                             if (vertex.y == -range)
                             {
-                                BottomTileVertexes.Add(new Vector2Int(-vertex.x, vertex.z));
+                                BottomTileVertexes.Add(new Vector2Int(vertex.x, vertex.z));
                             }
                         }
                     }
@@ -186,13 +186,18 @@ namespace WaveFunctionCollapse
             HashSet<Vector2Int> leftTileVertexes = RevertX(BackTileVertexes);
             HashSet<Vector2Int> backTileVertexes = new HashSet<Vector2Int>(RightTileVertexes);
             HashSet<Vector2Int> rightTileVertexes = RevertX(ForwardTileVertexes);
+            HashSet<Vector2Int> upTileVertexes = RotateVectors(ForwardTileVertexes);
+            HashSet<Vector2Int> bottomTileVertexes = RotateVectors(ForwardTileVertexes);
 
             LeftTileVertexes = leftTileVertexes;
             BackTileVertexes = backTileVertexes;
             RightTileVertexes = rightTileVertexes;
-            ForwardTileVertexes = forwardTileVertexes;
+            ForwardTileVertexes = forwardTileVertexes;   
+            
+            UpTileVertexes = upTileVertexes;
+            BottomTileVertexes = bottomTileVertexes;
             //TODO make for Y
-            transform.Rotate(new Vector3(0, 90, 0));
+            transform.eulerAngles += (new Vector3(0, 90, 0));
         }
 
 
@@ -208,29 +213,54 @@ namespace WaveFunctionCollapse
 
             return vertexes;
         }
+        private HashSet<Vector2Int> RevertY(HashSet<Vector2Int> oldSet)
+        {
+            HashSet<Vector2Int> vertexes = new HashSet<Vector2Int>();
+            foreach (Vector2Int vector2Int in oldSet)
+            {
+                Vector2Int newVector = vector2Int;
+                newVector.y = -newVector.y;
+                vertexes.Add(newVector);
+            }
+
+            return vertexes;
+        }
+
+        private HashSet<Vector2Int> RotateVectors(HashSet<Vector2Int> oldSet, int count = 1)
+        {
+            HashSet<Vector2Int> vertexes = new HashSet<Vector2Int>();
+            foreach (Vector2Int vector2Int in oldSet)
+            {
+                Vector2Int newVector = vector2Int;
+                for (int i = 0; i < count; i++)
+                {
+                     newVector = new Vector2Int(newVector.y,-newVector.x);
+
+                }
+                vertexes.Add(newVector);
+            }
+
+            return vertexes;
+        }
 
         public void RotateY180()
         {
-            WfcEdgeType[] edges = new WfcEdgeType[6];
-            VertexType[] vertexes = new VertexType[8];
-            edges[0] = Edges[1];
-            edges[1] = Edges[0];
-            edges[2] = Edges[2];
-            edges[3] = Edges[3];
-            edges[4] = Edges[5];
-            edges[5] = Edges[4];
+            HashSet<Vector2Int> forwardTileVertexes = RevertY(BackTileVertexes);
+            HashSet<Vector2Int> leftTileVertexes = RotateVectors(LeftTileVertexes,2);
+            HashSet<Vector2Int> backTileVertexes = RevertY(ForwardTileVertexes);
+            HashSet<Vector2Int> rightTileVertexes = RotateVectors(RightTileVertexes,2);
+            HashSet<Vector2Int> upTileVertexes = RevertY(BottomTileVertexes);
+            HashSet<Vector2Int> bottomTileVertexes = RevertY(UpTileVertexes);
 
-            vertexes[0] = Vertexes[7];
-            vertexes[1] = Vertexes[6];
-            vertexes[2] = Vertexes[5];
-            vertexes[3] = Vertexes[4];
-
-            vertexes[4] = Vertexes[3];
-            vertexes[5] = Vertexes[2];
-            vertexes[6] = Vertexes[1];
-            vertexes[7] = Vertexes[0];
-            Edges = edges;
-            Vertexes = vertexes;
+            LeftTileVertexes = leftTileVertexes;
+            BackTileVertexes = backTileVertexes;
+            RightTileVertexes = rightTileVertexes;
+            ForwardTileVertexes = forwardTileVertexes;   
+            
+            UpTileVertexes = upTileVertexes;
+            BottomTileVertexes = bottomTileVertexes;
+            
+            
             transform.Rotate(new Vector3(180, 0, 0));
         }
     }
