@@ -39,12 +39,13 @@ namespace WaveFunctionCollapse
         [Button]
         public void GetVertexes()
         {
-            Colliders = GetComponentsInChildren<BoxCollider>();
             ForwardTileVertexes.Clear();
             RightTileVertexes.Clear();
-
-            float tolerance = 0.01f;
-
+            LeftTileVertexes.Clear();
+            BackTileVertexes.Clear();
+            UpTileVertexes.Clear();
+            BottomTileVertexes.Clear();
+            Colliders = GetComponentsInChildren<BoxCollider>();
 
             foreach (var elementCollider in Colliders)
             {
@@ -73,7 +74,7 @@ namespace WaveFunctionCollapse
 
                             if (vertex.y == range)
                             {
-                                UpTileVertexes.Add(new Vector2Int(vertex.x, vertex.y));
+                                UpTileVertexes.Add(new Vector2Int(vertex.x, vertex.z));
                             }
 
                             if (vertex.x == -range)
@@ -94,22 +95,36 @@ namespace WaveFunctionCollapse
                     }
                 }
 
-                RightTileVertexes=CheckOnFull(RightTileVertexes);
-                ForwardTileVertexes=CheckOnFull(ForwardTileVertexes);
-                UpTileVertexes=CheckOnFull(UpTileVertexes);
-                LeftTileVertexes=CheckOnFull(LeftTileVertexes);
-                BackTileVertexes=CheckOnFull(BackTileVertexes);
-                BottomTileVertexes=CheckOnFull(BottomTileVertexes);
+                RightTileVertexes = CheckOnFull(RightTileVertexes);
+                ForwardTileVertexes = CheckOnFull(ForwardTileVertexes);
+                UpTileVertexes = CheckOnFull(UpTileVertexes);
+                LeftTileVertexes = CheckOnFull(LeftTileVertexes);
+                BackTileVertexes = CheckOnFull(BackTileVertexes);
+                BottomTileVertexes = CheckOnFull(BottomTileVertexes);
             }
         }
 
         private HashSet<Vector2Int> CheckOnFull(HashSet<Vector2Int> hashSet)
         {
+            if (hashSet.Count < 4)
+                return hashSet;
+            int minX = hashSet.Min(point => point.x);
+            int minY = hashSet.Min(point => point.y);
+            int maxX = hashSet.Max(point => point.x);
+            int maxY = hashSet.Max(point => point.y);
+
+            Vector2 center = new Vector2((minX + maxX) / 2f, (minY + maxY) / 2f);
+
+            // Ширина и высота прямоугольника
+            float width = (maxX - minX) / 2f;
+            float height = (maxY - minY) / 2f;
             int corners = 0;
             foreach (Vector2Int vector2 in hashSet)
             {
-                if (Mathf.Abs(vector2.x) == range &&
-                    Mathf.Abs(vector2.y) == range)
+                Vector2 vector = vector2 - center;
+                int x = (int)(Mathf.Abs(vector.x) - width);
+                int y = (int)(Mathf.Abs(vector.y) - height);
+                if (x == 0 && y == 0)
                 {
                     corners++;
                 }
@@ -119,12 +134,13 @@ namespace WaveFunctionCollapse
             {
                 hashSet = new HashSet<Vector2Int>()
                 {
-                    new Vector2Int(range, range),
-                    new Vector2Int(range, -range),
-                    new Vector2Int(-range, range),
-                    new Vector2Int(-range, -range)
+                    new Vector2Int((int)(center.x + width), (int)(center.y + height)),
+                    new Vector2Int((int)(center.x + width), (int)(center.y - height)),
+                    new Vector2Int((int)(center.x - width), (int)(center.y + height)),
+                    new Vector2Int((int)(center.x - width), (int)(center.y- height))
                 };
             }
+
             return hashSet;
         }
 
@@ -169,7 +185,7 @@ namespace WaveFunctionCollapse
             //     Vector3 worldPosition = transform.TransformPoint(vertex/10f);
             //     Gizmos.DrawWireSphere(worldPosition, 0.03f);
             // }
-            //
+
             // Gizmos.color = Color.magenta;
             //
             // foreach (Vector3 vertex in BackTileVertexes)
@@ -186,14 +202,14 @@ namespace WaveFunctionCollapse
             HashSet<Vector2Int> leftTileVertexes = RevertX(BackTileVertexes);
             HashSet<Vector2Int> backTileVertexes = new HashSet<Vector2Int>(RightTileVertexes);
             HashSet<Vector2Int> rightTileVertexes = RevertX(ForwardTileVertexes);
-            HashSet<Vector2Int> upTileVertexes = RotateVectors(ForwardTileVertexes);
-            HashSet<Vector2Int> bottomTileVertexes = RotateVectors(ForwardTileVertexes);
+            HashSet<Vector2Int> upTileVertexes = RotateVectors(UpTileVertexes);
+            HashSet<Vector2Int> bottomTileVertexes = RotateVectors(BottomTileVertexes);
 
             LeftTileVertexes = leftTileVertexes;
             BackTileVertexes = backTileVertexes;
             RightTileVertexes = rightTileVertexes;
-            ForwardTileVertexes = forwardTileVertexes;   
-            
+            ForwardTileVertexes = forwardTileVertexes;
+
             UpTileVertexes = upTileVertexes;
             BottomTileVertexes = bottomTileVertexes;
             //TODO make for Y
@@ -213,6 +229,7 @@ namespace WaveFunctionCollapse
 
             return vertexes;
         }
+
         private HashSet<Vector2Int> RevertY(HashSet<Vector2Int> oldSet)
         {
             HashSet<Vector2Int> vertexes = new HashSet<Vector2Int>();
@@ -234,9 +251,9 @@ namespace WaveFunctionCollapse
                 Vector2Int newVector = vector2Int;
                 for (int i = 0; i < count; i++)
                 {
-                     newVector = new Vector2Int(newVector.y,-newVector.x);
-
+                    newVector = new Vector2Int(newVector.y, -newVector.x);
                 }
+
                 vertexes.Add(newVector);
             }
 
@@ -246,21 +263,21 @@ namespace WaveFunctionCollapse
         public void RotateY180()
         {
             HashSet<Vector2Int> forwardTileVertexes = RevertY(BackTileVertexes);
-            HashSet<Vector2Int> leftTileVertexes = RotateVectors(LeftTileVertexes,2);
+            HashSet<Vector2Int> leftTileVertexes = RotateVectors(LeftTileVertexes, 2);
             HashSet<Vector2Int> backTileVertexes = RevertY(ForwardTileVertexes);
-            HashSet<Vector2Int> rightTileVertexes = RotateVectors(RightTileVertexes,2);
+            HashSet<Vector2Int> rightTileVertexes = RotateVectors(RightTileVertexes, 2);
             HashSet<Vector2Int> upTileVertexes = RevertY(BottomTileVertexes);
             HashSet<Vector2Int> bottomTileVertexes = RevertY(UpTileVertexes);
 
             LeftTileVertexes = leftTileVertexes;
             BackTileVertexes = backTileVertexes;
             RightTileVertexes = rightTileVertexes;
-            ForwardTileVertexes = forwardTileVertexes;   
-            
+            ForwardTileVertexes = forwardTileVertexes;
+
             UpTileVertexes = upTileVertexes;
             BottomTileVertexes = bottomTileVertexes;
-            
-            
+
+
             transform.Rotate(new Vector3(180, 0, 0));
         }
     }

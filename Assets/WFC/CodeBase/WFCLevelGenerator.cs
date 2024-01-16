@@ -11,20 +11,21 @@ public class WFCLevelGenerator : MonoBehaviour
 {
     [SerializeField] private WfcGenerationRules _generationRules;
     public List<WfcElementObject> TilePrefabs;
-    public Vector2Int MapSize = new Vector2Int(10, 10);
+    public Vector3Int MapSize = new Vector3Int(10, 10, 10);
 
-    private WfcElementObject[,] spawnedTiles;
+    private WfcElementObject[,,] spawnedTiles;
 
-    private Queue<Vector2Int> recalcPossibleTilesQueue = new Queue<Vector2Int>();
-    private List<WfcElementObject>[,] possibleTiles;
-    [SerializeField]private WfcElementObject _edgeObject;
+    private Queue<Vector3Int> recalcPossibleTilesQueue = new Queue<Vector3Int>();
+    private List<WfcElementObject>[,,] possibleTiles;
+    [SerializeField] private WfcElementObject _edgeObject;
+    [SerializeField] private WfcElementObject _centerObject;
     public WfcElementObject first;
     public WfcElementObject second;
     public WfcRotations direction;
 
     private void Start()
     {
-        spawnedTiles = new WfcElementObject[MapSize.x, MapSize.y];
+        spawnedTiles = new WfcElementObject[MapSize.x, MapSize.y, MapSize.z];
 
         int countBeforeAdding = TilePrefabs.Count;
         foreach (WfcElementObject tile in TilePrefabs)
@@ -32,7 +33,6 @@ public class WFCLevelGenerator : MonoBehaviour
             tile.GetVertexes();
         }
 
-        Debug.Log("__");
         for (int i = 0; i < countBeforeAdding; i++)
         {
             SetupTile(i);
@@ -49,26 +49,40 @@ public class WFCLevelGenerator : MonoBehaviour
         {
             case WfcPositioning.OneRotation:
                 break;
+            case WfcPositioning.OneVerticalRotation:
+                TilePrefabs[tileIndex].Weight /= 2;
+                if (TilePrefabs[tileIndex].Weight <= 0) TilePrefabs[tileIndex].Weight = 0.5f;
+
+                clone = Instantiate(TilePrefabs[tileIndex],
+                    TilePrefabs[tileIndex].transform.position + Vector3.forward * 1.2f,
+                    Quaternion.identity, parent);
+                clone.GetVertexes();
+                clone.RotateY180();
+                TilePrefabs.Add(clone);
+                break;
 
             case WfcPositioning.HorizontalRotations:
                 TilePrefabs[tileIndex].Weight /= 4;
                 if (TilePrefabs[tileIndex].Weight <= 0) TilePrefabs[tileIndex].Weight = 0.5f;
 
 
-                clone = Instantiate(TilePrefabs[tileIndex], TilePrefabs[tileIndex].transform.position + Vector3.forward * 1.2f,
+                clone = Instantiate(TilePrefabs[tileIndex],
+                    TilePrefabs[tileIndex].transform.position + Vector3.forward * 1.2f,
                     Quaternion.identity, parent);
                 clone.GetVertexes();
                 clone.RotateX90();
                 TilePrefabs.Add(clone);
 
-                clone = Instantiate(TilePrefabs[tileIndex], TilePrefabs[tileIndex].transform.position + Vector3.forward * 2 * 1.2f,
+                clone = Instantiate(TilePrefabs[tileIndex],
+                    TilePrefabs[tileIndex].transform.position + Vector3.forward * 2 * 1.2f,
                     Quaternion.identity, parent);
                 clone.GetVertexes();
                 clone.RotateX90();
                 clone.RotateX90();
                 TilePrefabs.Add(clone);
 
-                clone = Instantiate(TilePrefabs[tileIndex], TilePrefabs[tileIndex].transform.position + Vector3.forward * 3 * 1.2f,
+                clone = Instantiate(TilePrefabs[tileIndex],
+                    TilePrefabs[tileIndex].transform.position + Vector3.forward * 3 * 1.2f,
                     Quaternion.identity, parent);
                 clone.GetVertexes();
                 clone.RotateX90();
@@ -81,20 +95,23 @@ public class WFCLevelGenerator : MonoBehaviour
                 if (TilePrefabs[tileIndex].Weight <= 0) TilePrefabs[tileIndex].Weight = 0.5f;
 
 
-                clone = Instantiate(TilePrefabs[tileIndex], TilePrefabs[tileIndex].transform.position + Vector3.forward * 1.2f,
+                clone = Instantiate(TilePrefabs[tileIndex],
+                    TilePrefabs[tileIndex].transform.position + Vector3.forward * 1.2f,
                     Quaternion.identity, parent);
                 clone.GetVertexes();
                 clone.RotateX90();
                 TilePrefabs.Add(clone);
 
-                clone = Instantiate(TilePrefabs[tileIndex], TilePrefabs[tileIndex].transform.position + Vector3.forward * 2 * 1.2f,
+                clone = Instantiate(TilePrefabs[tileIndex],
+                    TilePrefabs[tileIndex].transform.position + Vector3.forward * 2 * 1.2f,
                     Quaternion.identity, parent);
                 clone.GetVertexes();
                 clone.RotateX90();
                 clone.RotateX90();
                 TilePrefabs.Add(clone);
 
-                clone = Instantiate(TilePrefabs[tileIndex], TilePrefabs[tileIndex].transform.position + Vector3.forward * 3 * 1.2f,
+                clone = Instantiate(TilePrefabs[tileIndex],
+                    TilePrefabs[tileIndex].transform.position + Vector3.forward * 3 * 1.2f,
                     Quaternion.identity, parent);
                 clone.GetVertexes();
                 clone.RotateX90();
@@ -103,13 +120,15 @@ public class WFCLevelGenerator : MonoBehaviour
                 TilePrefabs.Add(clone);
 
                 /////////////
-                clone = Instantiate(TilePrefabs[tileIndex], TilePrefabs[tileIndex].transform.position + Vector3.forward * 4 * 1.2f,
+                clone = Instantiate(TilePrefabs[tileIndex],
+                    TilePrefabs[tileIndex].transform.position + Vector3.forward * 4 * 1.2f,
                     Quaternion.identity, parent);
                 clone.GetVertexes();
                 clone.RotateY180();
                 TilePrefabs.Add(clone);
 
-                clone = Instantiate(TilePrefabs[tileIndex], TilePrefabs[tileIndex].transform.position + Vector3.forward * 5 * 1.2f,
+                clone = Instantiate(TilePrefabs[tileIndex],
+                    TilePrefabs[tileIndex].transform.position + Vector3.forward * 5 * 1.2f,
                     Quaternion.identity, parent);
                 clone.GetVertexes();
                 clone.RotateY180();
@@ -117,7 +136,8 @@ public class WFCLevelGenerator : MonoBehaviour
                 clone.RotateX90();
                 TilePrefabs.Add(clone);
 
-                clone = Instantiate(TilePrefabs[tileIndex], TilePrefabs[tileIndex].transform.position + Vector3.forward * 6 * 1.2f,
+                clone = Instantiate(TilePrefabs[tileIndex],
+                    TilePrefabs[tileIndex].transform.position + Vector3.forward * 6 * 1.2f,
                     Quaternion.identity, parent);
                 clone.GetVertexes();
                 clone.RotateY180();
@@ -126,7 +146,8 @@ public class WFCLevelGenerator : MonoBehaviour
                 clone.RotateX90();
                 TilePrefabs.Add(clone);
 
-                clone = Instantiate(TilePrefabs[tileIndex], TilePrefabs[tileIndex].transform.position + Vector3.forward * 7 * 1.2f,
+                clone = Instantiate(TilePrefabs[tileIndex],
+                    TilePrefabs[tileIndex].transform.position + Vector3.forward * 7 * 1.2f,
                     Quaternion.identity, parent);
                 clone.GetVertexes();
                 clone.RotateY180();
@@ -156,7 +177,7 @@ public class WFCLevelGenerator : MonoBehaviour
 
     private void Generate()
     {
-        possibleTiles = new List<WfcElementObject>[MapSize.x, MapSize.y];
+        possibleTiles = new List<WfcElementObject>[MapSize.x, MapSize.y, MapSize.z];
 
         int maxAttempts = 10;
         int attempts = 0;
@@ -164,16 +185,21 @@ public class WFCLevelGenerator : MonoBehaviour
         {
             for (int x = 0; x < MapSize.x; x++)
             for (int y = 0; y < MapSize.y; y++)
+            for (int z = 0; z < MapSize.z; z++)
             {
-                possibleTiles[x, y] = new List<WfcElementObject>(TilePrefabs);
+                possibleTiles[x, y, z] = new List<WfcElementObject>(TilePrefabs);
             }
 
-            //WfcElementObject tileInCenter = GetRandomTile(TilePrefabs);
-            WfcElementObject tileInCenter = TilePrefabs[2];
-            possibleTiles[MapSize.x / 2, MapSize.y / 2] = new List<WfcElementObject> { tileInCenter };
-
-            recalcPossibleTilesQueue.Clear();
-            EnqueueNeighboursToRecalc(new Vector2Int(MapSize.x / 2, MapSize.y / 2));
+             //WfcElementObject tileInCenter = GetRandomTile(TilePrefabs);
+            possibleTiles[MapSize.x / 2, MapSize.y / 2, MapSize.z / 2] = new List<WfcElementObject> { _centerObject };
+            
+            // Vector3Int position = new Vector3Int(MapSize.x / 2, MapSize.y / 2, MapSize.z / 2);
+            // List<WfcElementObject> possibleTilesHere = possibleTiles[position.x, position.y, position.z];
+            // possibleTilesHere.RemoveAll(t => !IsTilePossible(t, position));
+            // possibleTiles[position.x, position.y, position.z] = new List<WfcElementObject>
+            //     { GetRandomTile(possibleTilesHere) };
+            // recalcPossibleTilesQueue.Clear();
+            EnqueueNeighboursToRecalc(new Vector3Int(MapSize.x / 2, MapSize.y / 2, MapSize.z / 2));
             FillEdges();
             bool success = GenerateAllPossibleTiles();
 
@@ -187,56 +213,60 @@ public class WFCLevelGenerator : MonoBehaviour
     {
         _edgeObject.GetVertexes();
 
-        for (int i = 0; i < MapSize.x; i++)
+        for (int x = 0; x < MapSize.x; x++)
+        for (int y = 0; y < MapSize.y-1; y++)
+        for (int z = 0; z < MapSize.z; z++)
         {
-            for (int j = 0; j < MapSize.y ; j++)
+            if ((x == 0 || y == 0 || z == 0 ||
+                                       x == MapSize.x - 1 || z == MapSize.z - 1))
             {
-                if (i == 0 || j == 0 ||
-                    i == MapSize.x - 1 || j == MapSize.y - 1)
-                {
-                    possibleTiles[i, j] =
-                        new List<WfcElementObject> { _edgeObject };
-                }
+                possibleTiles[x, y, z] =
+                    new List<WfcElementObject> { _edgeObject };
             }
         }
-            
-       
     }
+
     private bool GenerateAllPossibleTiles()
     {
         int maxIterations = MapSize.x * MapSize.y;
         int iterations = 0;
         int backtracks = 0;
+        int maxInnerIterations = 500;
 
         while (iterations++ < maxIterations)
         {
-            int maxInnerIterations = 500;
             int innerIterations = 0;
 
             while (recalcPossibleTilesQueue.Count > 0 && innerIterations++ < maxInnerIterations)
             {
-                Vector2Int position = recalcPossibleTilesQueue.Dequeue();
-                if (position.x == 0 || position.y == 0 ||
-                    position.x == MapSize.x - 1 || position.y == MapSize.y - 1)
+                Vector3Int position = recalcPossibleTilesQueue.Dequeue();
+                if (position.x == 0 || position.y == 0 || position.z == 0 ||
+                    position.x == MapSize.x - 1 || position.y == MapSize.y - 1 || position.z == MapSize.z - 1)
                 {
                     continue;
                 }
 
-                List<WfcElementObject> possibleTilesHere = possibleTiles[position.x, position.y];
-
+                List<WfcElementObject> possibleTilesHere = possibleTiles[position.x, position.y, position.z];
+                List<WfcElementObject> copy = new List<WfcElementObject>(possibleTilesHere);
                 int countRemoved = possibleTilesHere.RemoveAll(t => !IsTilePossible(t, position));
 
                 if (countRemoved > 0) EnqueueNeighboursToRecalc(position);
 
                 if (possibleTilesHere.Count == 0)
                 {
-                    // Зашли в тупик, в этих координатах невозможен ни один тайл. Попробуем ещё раз, разрешим все тайлы
-                    // в этих и соседних координатах, и посмотрим устаканится ли всё
                     possibleTilesHere.AddRange(TilePrefabs);
-                    possibleTiles[position.x + 1, position.y] = new List<WfcElementObject>(TilePrefabs);
-                    possibleTiles[position.x - 1, position.y] = new List<WfcElementObject>(TilePrefabs);
-                    possibleTiles[position.x, position.y + 1] = new List<WfcElementObject>(TilePrefabs);
-                    possibleTiles[position.x, position.y - 1] = new List<WfcElementObject>(TilePrefabs);
+                    if (position.x + 1 < MapSize.x - 1)
+                        possibleTiles[position.x + 1, position.y, position.z] = new List<WfcElementObject>(TilePrefabs);
+                    if (position.x - 1 > 0)
+                        possibleTiles[position.x - 1, position.y, position.z] = new List<WfcElementObject>(TilePrefabs);
+                    if (position.y + 1 < MapSize.y - 1)
+                        possibleTiles[position.x, position.y + 1, position.z] = new List<WfcElementObject>(TilePrefabs);
+                    if (position.y - 1 > 0)
+                        possibleTiles[position.x, position.y - 1, position.z] = new List<WfcElementObject>(TilePrefabs);
+                    if (position.z + 1 < MapSize.z - 1)
+                        possibleTiles[position.x, position.y, position.z + 1] = new List<WfcElementObject>(TilePrefabs);
+                    if (position.z - 1 > 0)
+                        possibleTiles[position.x, position.y, position.z - 1] = new List<WfcElementObject>(TilePrefabs);
 
                     EnqueueNeighboursToRecalc(position);
 
@@ -246,16 +276,17 @@ public class WFCLevelGenerator : MonoBehaviour
 
             if (innerIterations == maxInnerIterations) break;
 
-            List<WfcElementObject> maxCountTile = possibleTiles[1, 1];
-            Vector2Int maxCountTilePosition = new Vector2Int(1, 1);
+            List<WfcElementObject> maxCountTile = possibleTiles[1, 1, 1];
+            Vector3Int maxCountTilePosition = new Vector3Int(1, 1, 1);
 
             for (int x = 1; x < MapSize.x - 1; x++)
             for (int y = 1; y < MapSize.y - 1; y++)
+            for (int z = 1; z < MapSize.z - 1; z++)
             {
-                if (possibleTiles[x, y].Count > maxCountTile.Count)
+                if (possibleTiles[x, y, z].Count > maxCountTile.Count)
                 {
-                    maxCountTile = possibleTiles[x, y];
-                    maxCountTilePosition = new Vector2Int(x, y);
+                    maxCountTile = possibleTiles[x, y, z];
+                    maxCountTilePosition = new Vector3Int(x, y, z);
                 }
             }
 
@@ -266,7 +297,7 @@ public class WFCLevelGenerator : MonoBehaviour
             }
 
             WfcElementObject tileToCollapse = GetRandomTile(maxCountTile);
-            possibleTiles[maxCountTilePosition.x, maxCountTilePosition.y] =
+            possibleTiles[maxCountTilePosition.x, maxCountTilePosition.y, maxCountTilePosition.z] =
                 new List<WfcElementObject> { tileToCollapse };
             EnqueueNeighboursToRecalc(maxCountTilePosition);
         }
@@ -275,53 +306,68 @@ public class WFCLevelGenerator : MonoBehaviour
         return false;
     }
 
-    private bool IsTilePossible(WfcElementObject tile, Vector2Int position)
+    private bool IsTilePossible(WfcElementObject tile, Vector3Int position)
     {
-        bool isAllRightImpossible = possibleTiles[position.x - 1, position.y]
+        bool isAllRightImpossible = possibleTiles[position.x - 1, position.y, position.z]
             .All(rightTile => !CanAppendTile(tile, rightTile, WfcRotations.Left));
         if (isAllRightImpossible) return false;
 
-        bool isAllLeftImpossible = possibleTiles[position.x + 1, position.y]
+        bool isAllLeftImpossible = possibleTiles[position.x + 1, position.y, position.z]
             .All(leftTile => !CanAppendTile(tile, leftTile, WfcRotations.Right));
         if (isAllLeftImpossible) return false;
 
-        bool isAllForwardImpossible = possibleTiles[position.x, position.y - 1]
+
+        bool isAllForwardImpossible = possibleTiles[position.x, position.y, position.z - 1]
             .All(fwdTile => !CanAppendTile(tile, fwdTile, WfcRotations.Back));
         if (isAllForwardImpossible) return false;
 
-        bool isAllBackImpossible = possibleTiles[position.x, position.y + 1]
+        bool isAllBackImpossible = possibleTiles[position.x, position.y, position.z + 1]
             .All(backTile => !CanAppendTile(tile, backTile, WfcRotations.Forward));
         if (isAllBackImpossible) return false;
+
+        bool isAllUpImpossible = possibleTiles[position.x, position.y - 1, position.z]
+            .All(fwdTile => !CanAppendTile(tile, fwdTile, WfcRotations.Bottom));
+        if (isAllUpImpossible) return false;
+
+        bool isAllBottomImpossible = possibleTiles[position.x, position.y + 1, position.z]
+            .All(backTile => !CanAppendTile(tile, backTile, WfcRotations.Up));
+        if (isAllBottomImpossible) return false;
 
         return true;
     }
 
     private void PlaceAllTiles()
     {
-        for (int x = 1; x < MapSize.x - 1; x++)
-        for (int y = 1; y < MapSize.y - 1; y++)
+        // for (int x = 1; x < MapSize.x - 1; x++)
+        // for (int y = 1; y < MapSize.y - 1; y++)
+        // for (int z = 1; z < MapSize.z - 1; z++)
+         for (int x = 0; x < MapSize.x ; x++)
+         for (int y = 0; y < MapSize.y - 1; y++)
+         for (int z = 0; z < MapSize.z ; z++)
         {
-            PlaceTile(x, y);
+            PlaceTile(x, y, z);
         }
     }
 
-    private void EnqueueNeighboursToRecalc(Vector2Int position)
+    private void EnqueueNeighboursToRecalc(Vector3Int position)
     {
-        recalcPossibleTilesQueue.Enqueue(new Vector2Int(position.x + 1, position.y));
-        recalcPossibleTilesQueue.Enqueue(new Vector2Int(position.x - 1, position.y));
-        recalcPossibleTilesQueue.Enqueue(new Vector2Int(position.x, position.y + 1));
-        recalcPossibleTilesQueue.Enqueue(new Vector2Int(position.x, position.y - 1));
+        recalcPossibleTilesQueue.Enqueue(new Vector3Int(position.x + 1, position.y, position.z));
+        recalcPossibleTilesQueue.Enqueue(new Vector3Int(position.x - 1, position.y, position.z));
+        recalcPossibleTilesQueue.Enqueue(new Vector3Int(position.x, position.y + 1, position.z));
+        recalcPossibleTilesQueue.Enqueue(new Vector3Int(position.x, position.y - 1, position.z));
+        recalcPossibleTilesQueue.Enqueue(new Vector3Int(position.x, position.y, position.z + 1));
+        recalcPossibleTilesQueue.Enqueue(new Vector3Int(position.x, position.y, position.z - 1));
     }
 
-    private void PlaceTile(int x, int y)
+    private void PlaceTile(int x, int y, int z)
     {
-        if (possibleTiles[x, y].Count == 0) return;
+        if (possibleTiles[x, y, z].Count == 0) return;
 
-        WfcElementObject selectedTile = GetRandomTile(possibleTiles[x, y]);
+        WfcElementObject selectedTile = GetRandomTile(possibleTiles[x, y, z]);
         if (selectedTile.NotGenerate) return;
 
-        Vector3 position = _generationRules._tileSize * new Vector3(x, 1, y);
-        spawnedTiles[x, y] = Instantiate(selectedTile, position, selectedTile.transform.rotation, transform);
+        Vector3 position = _generationRules._tileSize * new Vector3(x, y + 1, z);
+        spawnedTiles[x, y, z] = Instantiate(selectedTile, position, selectedTile.transform.rotation, transform);
     }
 
     private WfcElementObject GetRandomTile(List<WfcElementObject> availableTiles)
@@ -344,14 +390,15 @@ public class WFCLevelGenerator : MonoBehaviour
             }
         }
 
-        return availableTiles[availableTiles.Count - 1];
+        return availableTiles[^1];
     }
 
     [Button]
     public void TestCheck()
     {
-        Debug.Log(CanAppendTile(first,second,direction));
+        Debug.Log(CanAppendTile(first, second, direction));
     }
+
     private bool CanAppendTile(WfcElementObject existingTile, WfcElementObject tileToAppend, WfcRotations direction)
     {
         if (existingTile == null) return true;
@@ -371,6 +418,14 @@ public class WFCLevelGenerator : MonoBehaviour
         else if (direction == WfcRotations.Back)
         {
             return existingTile.BackTileVertexes.SetEquals(tileToAppend.ForwardTileVertexes);
+        }
+        else if (direction == WfcRotations.Up)
+        {
+            return existingTile.UpTileVertexes.SetEquals(tileToAppend.BottomTileVertexes);
+        }
+        else if (direction == WfcRotations.Bottom)
+        {
+            return existingTile.BottomTileVertexes.SetEquals(tileToAppend.UpTileVertexes);
         }
         else
         {

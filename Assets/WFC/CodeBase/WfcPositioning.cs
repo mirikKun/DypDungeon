@@ -4,6 +4,7 @@ namespace WaveFunctionCollapse
     {
         OneRotation,
         HorizontalRotations,
-        AllRotations
+        AllRotations,
+        OneVerticalRotation,
     }
 }
