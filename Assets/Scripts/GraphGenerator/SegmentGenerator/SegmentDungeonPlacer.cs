@@ -19,6 +19,8 @@ public class SegmentDungeonPlacer : DungeonPlacer
     [SerializeField] private Transform hallWayStraight;
     [SerializeField] private Transform hallWayCorner;
     [SerializeField] private Transform hallWayFork;
+
+    [SerializeField] private bool _2d;
     private int Any => (int)SegmentType.Anything;
     private int[,] extendedGrid;
 
@@ -30,42 +32,44 @@ public class SegmentDungeonPlacer : DungeonPlacer
         {
             for (int j = 1; j < extendedGrid.GetLength(1) - 1; j++)
             {
-                Transform segment;
-                
-                if (extendedGrid[i, j] > 0)
+                if (_2d)
                 {
-                    segment = roomPlane;
-                }
-                else if (extendedGrid[i, j] == -1)
-                {
-                    segment = hallwayPlane;
-                }
-                else if (extendedGrid[i, j] == -2)
-                {
-                    segment = doorPlane;
+                    Transform segment;
+
+                    if (extendedGrid[i, j] > 0)
+                    {
+                        segment = roomPlane;
+                    }
+                    else if (extendedGrid[i, j] == -1)
+                    {
+                        segment = hallwayPlane;
+                    }
+                    else if (extendedGrid[i, j] == -2)
+                    {
+                        segment = doorPlane;
+                    }
+                    else
+                    {
+                        segment = nonePlane;
+                    }
+
+                    Instantiate(segment, new Vector3(j, -2, i), Quaternion.identity, transform);
                 }
                 else
                 {
-                    segment = nonePlane;
+                    if (extendedGrid[i, j] > 0)
+                    {
+                        PlaceRoom(i, j, extendedGrid[i, j]);
+                    }
+                    else if (extendedGrid[i, j] == -1)
+                    {
+                        PlaceHallway(i, j);
+                    }
+                    else if (extendedGrid[i, j] == -2)
+                    {
+                        PlaceDoor(i, j);
+                    }
                 }
-                
-                Instantiate(segment, new Vector3(j, -2, i), Quaternion.identity, transform);
-
-
-                // if (extendedGrid[i, j] > 0)
-                // {
-                //     PlaceRoom(i, j, extendedGrid[i, j]);
-                // }
-                // else if (extendedGrid[i, j] == -1)
-                // {
-                //     PlaceHallway(i, j);
-                // }
-                // else if (extendedGrid[i, j] == -2)
-                // {
-                //     PlaceDoor(i, j);
-                // }
-            
-
             }
         }
     }
@@ -191,7 +195,7 @@ public class SegmentDungeonPlacer : DungeonPlacer
             Instantiate(hallWayFork, new Vector3(x, 0, y), Quaternion.Euler(0, -90, 0), transform);
         }
         else
-        //turns
+            //turns
         if (CheckOnPlace(new[] { Any, hallWay, Any, Any, hallWay, hallWay, Any, Any, Any }, y, x))
         {
             Instantiate(hallWayCorner, new Vector3(x, 0, y), Quaternion.identity, transform);
@@ -209,8 +213,8 @@ public class SegmentDungeonPlacer : DungeonPlacer
             Instantiate(hallWayCorner, new Vector3(x, 0, y), Quaternion.Euler(0, -90, 0), transform);
         }
         else
-      
-        //straigthaa
+
+            //straigthaa
         if (CheckOnPlace(new[] { Any, 0, Any, Any, hallWay, Any, Any, 0, Any }, y, x))
         {
             Instantiate(hallWayStraight, new Vector3(x, 0, y), Quaternion.identity, transform);

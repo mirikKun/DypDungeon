@@ -17,6 +17,7 @@ namespace WaveFunctionCollapse
         public BoxCollider[] Colliders;
         public WfcPositioning WfcPositioning;
         public int range = 5;
+        public bool _staticElement;
 
 
         public HashSet<Vector2Int> ForwardTileVertexes = new HashSet<Vector2Int>();
@@ -280,5 +281,7 @@ namespace WaveFunctionCollapse
 
             transform.Rotate(new Vector3(180, 0, 0));
         }
+
+
     }
 }

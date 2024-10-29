@@ -19,10 +19,11 @@ public class WFCLevelGenerator : MonoBehaviour
     private List<WfcElementObject>[,,] possibleTiles;
     [SerializeField] private WfcElementObject _edgeObject;
     [SerializeField] private WfcElementObject _centerObject;
+    [SerializeField] private WfcElementObject _emptyObject;
     public WfcElementObject first;
     public WfcElementObject second;
     public WfcRotations direction;
-
+    
     private void Start()
     {
         spawnedTiles = new WfcElementObject[MapSize.x, MapSize.y, MapSize.z];
@@ -45,6 +46,7 @@ public class WFCLevelGenerator : MonoBehaviour
     {
         WfcElementObject clone;
         Transform parent = TilePrefabs[0].transform.parent;
+
         switch (TilePrefabs[tileIndex].WfcPositioning)
         {
             case WfcPositioning.OneRotation:
@@ -59,6 +61,7 @@ public class WFCLevelGenerator : MonoBehaviour
                 clone.GetVertexes();
                 clone.RotateY180();
                 TilePrefabs.Add(clone);
+
                 break;
 
             case WfcPositioning.HorizontalRotations:
@@ -89,9 +92,11 @@ public class WFCLevelGenerator : MonoBehaviour
                 clone.RotateX90();
                 clone.RotateX90();
                 TilePrefabs.Add(clone);
+
                 break;
             case WfcPositioning.AllRotations:
                 TilePrefabs[tileIndex].Weight /= 8;
+
                 if (TilePrefabs[tileIndex].Weight <= 0) TilePrefabs[tileIndex].Weight = 0.5f;
 
 
@@ -156,6 +161,7 @@ public class WFCLevelGenerator : MonoBehaviour
                 clone.RotateX90();
                 clone.RotateX90();
                 TilePrefabs.Add(clone);
+
                 break;
             default:
                 throw new ArgumentOutOfRangeException();
@@ -231,7 +237,7 @@ public class WFCLevelGenerator : MonoBehaviour
         int maxIterations = MapSize.x * MapSize.y;
         int iterations = 0;
         int backtracks = 0;
-        int maxInnerIterations = 500;
+        int maxInnerIterations = 200;
 
         while (iterations++ < maxIterations)
         {
@@ -247,7 +253,6 @@ public class WFCLevelGenerator : MonoBehaviour
                 }
 
                 List<WfcElementObject> possibleTilesHere = possibleTiles[position.x, position.y, position.z];
-                List<WfcElementObject> copy = new List<WfcElementObject>(possibleTilesHere);
                 int countRemoved = possibleTilesHere.RemoveAll(t => !IsTilePossible(t, position));
 
                 if (countRemoved > 0) EnqueueNeighboursToRecalc(position);
@@ -351,12 +356,22 @@ public class WFCLevelGenerator : MonoBehaviour
 
     private void EnqueueNeighboursToRecalc(Vector3Int position)
     {
-        recalcPossibleTilesQueue.Enqueue(new Vector3Int(position.x + 1, position.y, position.z));
-        recalcPossibleTilesQueue.Enqueue(new Vector3Int(position.x - 1, position.y, position.z));
-        recalcPossibleTilesQueue.Enqueue(new Vector3Int(position.x, position.y + 1, position.z));
-        recalcPossibleTilesQueue.Enqueue(new Vector3Int(position.x, position.y - 1, position.z));
-        recalcPossibleTilesQueue.Enqueue(new Vector3Int(position.x, position.y, position.z + 1));
-        recalcPossibleTilesQueue.Enqueue(new Vector3Int(position.x, position.y, position.z - 1));
+   
+
+        EnqueueTile(new Vector3Int(position.x + 1, position.y, position.z));
+        EnqueueTile(new Vector3Int(position.x - 1, position.y, position.z));
+        EnqueueTile(new Vector3Int(position.x, position.y + 1, position.z));
+        EnqueueTile(new Vector3Int(position.x, position.y - 1, position.z));
+        EnqueueTile(new Vector3Int(position.x, position.y, position.z + 1));
+        EnqueueTile(new Vector3Int(position.x, position.y, position.z - 1));
+    }
+
+    private void EnqueueTile(Vector3Int position)
+    {
+        if (possibleTiles.Length == 1 && possibleTiles[position.x, position.y, position.z][0] == _emptyObject)
+            return;
+        recalcPossibleTilesQueue.Enqueue(position);
+
     }
 
     private void PlaceTile(int x, int y, int z)
